@@ -131,6 +131,15 @@ class MainActivity : EdgeToEdgeIDEActivity() {
         startActivity(Intent(this, SetupActivity::class.java))
     }
 
+    /** @return true if bootstrap is installed and the user may continue; otherwise opens the setup screen. */
+    fun requireBootstrapSetup(): Boolean {
+        if (TermuxInstaller.isBootstrapInstalled()) {
+            return true
+        }
+        launchIdeSetup()
+        return false
+    }
+
     override fun onApplySystemBarInsets(insets: Insets) {
         binding.fragmentContainersParent.setPadding(
             insets.left,
@@ -199,6 +208,10 @@ class MainActivity : EdgeToEdgeIDEActivity() {
     }
 
     private fun tryOpenLastProject() {
+        if (!requireBootstrapSetup()) {
+            return
+        }
+
         if (!GeneralPreferences.autoOpenProjects) {
             return
         }
@@ -243,6 +256,10 @@ class MainActivity : EdgeToEdgeIDEActivity() {
         project: RecentProject? = null,
         hasTemplateIssues: Boolean = false,
     ) {
+        if (!requireBootstrapSetup()) {
+            return
+        }
+
         ProjectManagerImpl.getInstance().projectPath = root.absolutePath
         GeneralPreferences.lastOpenedProject = root.absolutePath
 

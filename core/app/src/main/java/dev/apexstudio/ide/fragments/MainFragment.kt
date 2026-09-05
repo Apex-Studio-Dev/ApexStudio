@@ -60,11 +60,11 @@ class MainFragment : BaseFragment() {
     val actions = MainScreenAction.all().also { actions ->
       val onClick = { action: MainScreenAction, _: View ->
         when (action.id) {
-          MainScreenAction.ACTION_CREATE_PROJECT -> showCreateProject()
-          MainScreenAction.ACTION_OPEN_PROJECT -> showViewSavedProjects()
-          MainScreenAction.ACTION_CLONE_REPO -> showCloneRepository()
+          MainScreenAction.ACTION_CREATE_PROJECT -> if (requireSetup()) showCreateProject()
+          MainScreenAction.ACTION_OPEN_PROJECT -> if (requireSetup()) showViewSavedProjects()
+          MainScreenAction.ACTION_CLONE_REPO -> if (requireSetup()) showCloneRepository()
           MainScreenAction.ACTION_DELETE_PROJECT -> pickDirectoryForDeletion()
-          MainScreenAction.ACTION_OPEN_TERMINAL -> startActivity(
+          MainScreenAction.ACTION_OPEN_TERMINAL -> if (requireSetup()) startActivity(
             Intent(requireActivity(), TerminalActivity::class.java))
 
           MainScreenAction.ACTION_PREFERENCES -> gotoPreferences()
@@ -78,6 +78,7 @@ class MainFragment : BaseFragment() {
 
         if (action.id == MainScreenAction.ACTION_OPEN_TERMINAL) {
           action.onLongClick = { _: MainScreenAction, _: View ->
+            if (!requireSetup()) return@onLongClick false
             val intent = Intent(requireActivity(), TerminalActivity::class.java).apply {
               putExtra(TERMUX_ACTIVITY.EXTRA_FAILSAFE_SESSION, true)
             }
@@ -90,6 +91,9 @@ class MainFragment : BaseFragment() {
 
     binding!!.actions.adapter = MainActionsListAdapter(actions)
   }
+
+  private fun requireSetup(): Boolean =
+    (requireActivity() as MainActivity).requireBootstrapSetup()
 
   override fun onDestroyView() {
     super.onDestroyView()
