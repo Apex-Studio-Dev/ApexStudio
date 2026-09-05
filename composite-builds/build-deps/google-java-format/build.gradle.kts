@@ -17,7 +17,7 @@
 
 plugins {
     id("com.android.library")
-    id("dev.mutwakil.androidide.build")
+    id("dev.apexstudio.ide.build")
 }
 
 android {

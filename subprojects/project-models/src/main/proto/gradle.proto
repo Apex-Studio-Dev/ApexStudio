@@ -2,7 +2,7 @@ syntax = "proto3";
 option optimize_for = LITE_RUNTIME;
 option java_outer_classname = "GradleModels";
 
-package dev.mutwakil.androidide.project;
+package dev.apexstudio.ide.project;
 
 import "android.proto";
 import "java.proto";

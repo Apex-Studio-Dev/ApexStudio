@@ -1,4 +1,4 @@
-package dev.mutwakil.androidide.test;
+package dev.apexstudio.ide.test;
 
 public class AddImportAction_template {
     public static void main(String[] args) {

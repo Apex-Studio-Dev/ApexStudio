@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-	namespace = "dev.mutwakil.androidide.git.core"
+	namespace = "dev.apexstudio.ide.git.core"
 }
 
 dependencies {

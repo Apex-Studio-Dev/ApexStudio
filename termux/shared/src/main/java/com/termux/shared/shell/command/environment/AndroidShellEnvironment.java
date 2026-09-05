@@ -4,7 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import dev.mutwakil.androidide.utils.Environment;
+import dev.apexstudio.ide.utils.Environment;
 import com.termux.shared.shell.command.ExecutionCommand;
 
 import java.io.File;

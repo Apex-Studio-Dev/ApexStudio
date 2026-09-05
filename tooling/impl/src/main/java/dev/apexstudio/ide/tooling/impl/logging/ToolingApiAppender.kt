@@ -1,0 +1,43 @@
+/*
+ *  This file is part of AndroidIDE.
+ *
+ *  AndroidIDE is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  AndroidIDE is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *   along with AndroidIDE.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package dev.apexstudio.ide.tooling.impl.logging
+
+import dev.apexstudio.ide.logging.provider.IdeLogFormatter
+import dev.apexstudio.ide.logging.provider.IdeLogRouter
+import dev.apexstudio.ide.tooling.api.messages.LogMessageParams
+import dev.apexstudio.ide.tooling.impl.Main
+import org.slf4j.event.Level
+
+/**
+ * [IdeLogRouter.ExternalSink] which forwards all logs to the tooling API client.
+ *
+ * @author Akash Yadav
+ */
+object ToolingApiAppender : IdeLogRouter.ExternalSink {
+  override fun onLog(
+    level: Level,
+    loggerName: String,
+    message: String,
+    throwable: Throwable?,
+  ) {
+    // Send the raw message, not a pre-formatted line: the client re-logs this through its
+    // own SLF4J logger (see GradleBuildService.logMessage), which formats it once already.
+    val fullMessage = IdeLogFormatter.appendThrowable(message, throwable)
+    Main.client?.logMessage(LogMessageParams(level.name.first(), loggerName, fullMessage))
+  }
+}

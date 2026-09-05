@@ -17,7 +17,7 @@
 
 plugins {
   id("java-library")
-  id("dev.mutwakil.androidide.build.propsparser")
+  id("dev.apexstudio.ide.build.propsparser")
 }
 
 tasks.withType<JavaCompile>().configureEach {

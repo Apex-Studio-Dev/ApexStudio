@@ -19,13 +19,13 @@ package io.github.rosemoe.sora.editor.ts
 
 import android.os.Handler
 import android.os.Looper
-import dev.mutwakil.androidide.syntax.colorschemes.SchemeAndroidIDE
+import dev.apexstudio.ide.syntax.colorschemes.SchemeAndroidIDE
 import com.itsaky.androidide.treesitter.TSInputEdit
 import com.itsaky.androidide.treesitter.TSQueryCursor
 import com.itsaky.androidide.treesitter.TSTree
-import dev.mutwakil.androidide.treesitter.api.TreeSitterInputEdit
-import dev.mutwakil.androidide.treesitter.api.TreeSitterQueryCapture
-import dev.mutwakil.androidide.treesitter.api.safeExecQueryCursor
+import dev.apexstudio.ide.treesitter.api.TreeSitterInputEdit
+import dev.apexstudio.ide.treesitter.api.TreeSitterQueryCapture
+import dev.apexstudio.ide.treesitter.api.safeExecQueryCursor
 import com.itsaky.androidide.treesitter.string.UTF16String
 import io.github.rosemoe.sora.data.ObjectAllocator
 import io.github.rosemoe.sora.editor.ts.spans.TsSpanFactory

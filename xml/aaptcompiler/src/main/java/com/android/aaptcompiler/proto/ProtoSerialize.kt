@@ -31,7 +31,7 @@ import com.android.aaptcompiler.android.ResTableConfig
 import com.android.aaptcompiler.android.ResValue
 import com.android.aaptcompiler.blameSource
 import com.android.aaptcompiler.buffer.BigBuffer
-import dev.mutwakil.androidide.layoutlib.resources.ResourceVisibility
+import dev.apexstudio.ide.layoutlib.resources.ResourceVisibility
 import com.android.utils.ILogger
 import com.google.protobuf.ByteString
 

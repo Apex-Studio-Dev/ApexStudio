@@ -24,7 +24,7 @@
  */
 package openjdk.tools.javac.file;
 
-import dev.mutwakil.androidide.zipfs2.JarPackageProvider;
+import dev.apexstudio.ide.zipfs2.JarPackageProvider;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;

@@ -1,5 +1,5 @@
 import com.google.protobuf.gradle.id
-import dev.mutwakil.androidide.plugins.conf.configureProtoc
+import dev.apexstudio.ide.plugins.conf.configureProtoc
 
 plugins {
 	id("java-library")

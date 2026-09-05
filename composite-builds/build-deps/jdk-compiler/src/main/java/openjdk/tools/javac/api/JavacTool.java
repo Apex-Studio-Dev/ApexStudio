@@ -40,7 +40,7 @@ import java.util.Set;
 import jdkx.lang.model.SourceVersion;
 import jdkx.tools.*;
 
-import dev.mutwakil.androidide.javac.config.JavacConfigProvider;
+import dev.apexstudio.ide.javac.config.JavacConfigProvider;
 import openjdk.source.util.JavacTask;
 import openjdk.tools.javac.file.JavacFileManager;
 import openjdk.tools.javac.main.Arguments;

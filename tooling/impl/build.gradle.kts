@@ -16,7 +16,7 @@
  */
 
 
-import dev.mutwakil.androidide.build.config.BuildConfig
+import dev.apexstudio.ide.build.config.BuildConfig
 
 @Suppress("JavaPluginLanguageLevel")
 plugins {

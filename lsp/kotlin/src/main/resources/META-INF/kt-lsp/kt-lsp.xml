@@ -3,12 +3,12 @@
 
 	<extensions defaultExtensionNs="com.intellij">
 		<projectService
-			serviceImplementation="dev.mutwakil.androidide.lsp.kotlin.compiler.services.DirectInheritorsProvider"
+			serviceImplementation="dev.apexstudio.ide.lsp.kotlin.compiler.services.DirectInheritorsProvider"
 			serviceInterface="org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDirectInheritorsProvider" />
 
 		<projectService
 			overrides="true"
-			serviceImplementation="dev.mutwakil.androidide.lsp.kotlin.compiler.services.ResolutionScopeProvider"
+			serviceImplementation="dev.apexstudio.ide.lsp.kotlin.compiler.services.ResolutionScopeProvider"
 			serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaResolutionScopeProvider" />
 
 		<applicationService

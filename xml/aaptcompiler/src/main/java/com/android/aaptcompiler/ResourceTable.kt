@@ -2,12 +2,12 @@ package com.android.aaptcompiler
 
 import androidx.collection.mutableIntObjectMapOf
 import com.android.aapt.Resources
-import dev.mutwakil.androidide.layoutlib.resources.ResourceVisibility
-import dev.mutwakil.androidide.xml.res.IResourceEntry
-import dev.mutwakil.androidide.xml.res.IResourceGroup
-import dev.mutwakil.androidide.xml.res.IResourceTable
-import dev.mutwakil.androidide.xml.res.IResourceTablePackage
-import dev.mutwakil.androidide.xml.res.ISearchResult
+import dev.apexstudio.ide.layoutlib.resources.ResourceVisibility
+import dev.apexstudio.ide.xml.res.IResourceEntry
+import dev.apexstudio.ide.xml.res.IResourceGroup
+import dev.apexstudio.ide.xml.res.IResourceTable
+import dev.apexstudio.ide.xml.res.IResourceTablePackage
+import dev.apexstudio.ide.xml.res.ISearchResult
 import java.io.File
 import java.util.SortedMap
 import java.util.TreeMap

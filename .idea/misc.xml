@@ -4,7 +4,7 @@
     <option name="perGrammarGenerationSettings">
       <list>
         <PerGrammarGenerationSettings>
-          <option name="fileName" value="$PROJECT_DIR$/lexers/src/main/java/dev/mutwakil/androidide/lexers/xml/XMLParser.g4" />
+          <option name="fileName" value="$PROJECT_DIR$/lexers/src/main/java/dev/apexstudio/ide/lexers/xml/XMLParser.g4" />
           <option name="autoGen" value="true" />
           <option name="outputDir" value="D:\Projects\AndroidStudioProjects\AndroidIDE\lexers\src\main\java" />
           <option name="libDir" value="" />
@@ -14,7 +14,7 @@
           <option name="generateVisitor" value="true" />
         </PerGrammarGenerationSettings>
         <PerGrammarGenerationSettings>
-          <option name="fileName" value="$PROJECT_DIR$/lexers/src/main/java/dev/mutwakil/androidide/lexers/java/JavaLexer.g4" />
+          <option name="fileName" value="$PROJECT_DIR$/lexers/src/main/java/dev/apexstudio/ide/lexers/java/JavaLexer.g4" />
           <option name="autoGen" value="true" />
           <option name="outputDir" value="" />
           <option name="libDir" value="" />

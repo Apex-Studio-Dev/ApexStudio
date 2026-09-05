@@ -79,7 +79,7 @@
         tools:indeterminate="false"
         tools:progress="50" />
 
-      <dev.mutwakil.androidide.ui.BottomInsetHeightDistributor
+      <dev.apexstudio.ide.ui.BottomInsetHeightDistributor
         android:id="@+id/height_distributor"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

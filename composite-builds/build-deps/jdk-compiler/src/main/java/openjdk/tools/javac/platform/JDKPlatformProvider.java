@@ -25,7 +25,7 @@
 
 package openjdk.tools.javac.platform;
 
-import dev.mutwakil.androidide.javac.config.JavacConfigProvider;
+import dev.apexstudio.ide.javac.config.JavacConfigProvider;
 
 import java.io.IOException;
 import java.io.PrintWriter;

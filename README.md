@@ -60,7 +60,7 @@
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.svg"
     alt="Get it on F-Droid"
-    height="80">](https://f-droid.org/packages/dev.mutwakil.androidide)
+    height="80">](https://f-droid.org/packages/dev.apexstudio.ide)
 [<img src="https://github.com/Kunzisoft/Github-badge/raw/main/get-it-on-github.svg"
     alt="Get it on F-Droid"
     height="80">](https://github.com/AndroidIDE-Pro/AndroidIDE/releases)
@@ -69,7 +69,7 @@
 > - [_The AndroidIDE website_](https://androidide.com)
 > - [_GitHub Releases_](https://github.com/AndroidIDE-Pro/AndroidIDE/releases)
 > - [_GitHub Actions_](https://github.com/AndroidIDE-Pro/AndroidIDE/actions?query=branch%3Adev+event%3Apush)
-> - [_F-Droid_](https://f-droid.org/packages/dev.mutwakil.androidide/)
+> - [_F-Droid_](https://f-droid.org/packages/dev.apexstudio.ide/)
 
 - Download the AndroidIDE APK from the mentioned trusted sources.
 - Follow the

@@ -1,6 +1,6 @@
 package com.termux.shared.termux.shell.command.environment;
 
-import static dev.mutwakil.androidide.utils.Environment.ANDROID_HOME;
+import static dev.apexstudio.ide.utils.Environment.ANDROID_HOME;
 
 import android.content.Context;
 

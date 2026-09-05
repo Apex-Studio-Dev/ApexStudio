@@ -1,7 +1,7 @@
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    id("dev.mutwakil.androidide.build")
+    id("dev.apexstudio.ide.build")
 }
 
 android {

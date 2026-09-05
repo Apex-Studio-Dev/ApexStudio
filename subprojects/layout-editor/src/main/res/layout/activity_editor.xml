@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<dev.mutwakil.androidide.layouteditor.views.CustomDrawerLayout
+<dev.apexstudio.ide.layouteditor.views.CustomDrawerLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
@@ -57,7 +57,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <dev.mutwakil.androidide.layouteditor.editor.DesignEditor
+    <dev.apexstudio.ide.layouteditor.editor.DesignEditor
       android:id="@+id/editor_layout"
       android:layout_height="match_parent"
       android:layout_width="match_parent"
@@ -152,7 +152,7 @@
         android:layout_width="wrap_content"
         android:nestedScrollingEnabled="true">
 
-        <dev.mutwakil.androidide.layouteditor.views.StructureView
+        <dev.apexstudio.ide.layouteditor.views.StructureView
           android:id="@+id/structure_view"
           android:layout_height="wrap_content"
           android:layout_width="wrap_content"
@@ -161,4 +161,4 @@
       </HorizontalScrollView>
     </ScrollView>
   </com.google.android.material.navigation.NavigationView>
-</dev.mutwakil.androidide.layouteditor.views.CustomDrawerLayout>
+</dev.apexstudio.ide.layouteditor.views.CustomDrawerLayout>

@@ -15,7 +15,7 @@
  *   along with AndroidIDE.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import dev.mutwakil.androidide.build.config.BuildConfig
+import dev.apexstudio.ide.build.config.BuildConfig
 
 plugins {
 	id("com.android.library")

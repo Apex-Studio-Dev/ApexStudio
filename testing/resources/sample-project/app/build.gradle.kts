@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "dev.mutwakil.androidide.template.Java.kts"
+    namespace = "dev.apexstudio.ide.template.Java.kts"
     compileSdk = 33
     
     defaultConfig {
-        applicationId = "dev.mutwakil.androidide.template.Java.kts"
+        applicationId = "dev.apexstudio.ide.template.Java.kts"
         minSdk = 21
         targetSdk = 33
         versionCode = 1

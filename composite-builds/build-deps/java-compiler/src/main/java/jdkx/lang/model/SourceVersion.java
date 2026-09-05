@@ -25,7 +25,7 @@
 
 package jdkx.lang.model;
 
-import dev.mutwakil.androidide.javac.config.JavacConfigProvider;
+import dev.apexstudio.ide.javac.config.JavacConfigProvider;
 
 /**
  * Source versions of the Java programming language.

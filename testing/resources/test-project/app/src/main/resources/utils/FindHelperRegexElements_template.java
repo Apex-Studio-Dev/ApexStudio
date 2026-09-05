@@ -1,4 +1,4 @@
-package dev.mutwakil.androidide.lsp.java.test;
+package dev.apexstudio.ide.lsp.java.test;
 
 import java.util.*;
 

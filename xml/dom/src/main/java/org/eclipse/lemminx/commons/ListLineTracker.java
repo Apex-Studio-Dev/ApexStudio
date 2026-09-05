@@ -13,7 +13,7 @@
  *******************************************************************************/
 package org.eclipse.lemminx.commons;
 
-import dev.mutwakil.androidide.models.Position;
+import dev.apexstudio.ide.models.Position;
 
 import java.util.ArrayList;
 import java.util.List;

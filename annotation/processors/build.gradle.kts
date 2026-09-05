@@ -17,7 +17,7 @@
 
 
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import dev.mutwakil.androidide.build.config.BuildConfig
+import dev.apexstudio.ide.build.config.BuildConfig
 
 plugins {
   kotlin("jvm")

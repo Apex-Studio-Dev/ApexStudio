@@ -16,8 +16,8 @@
  */
 
 
-import dev.mutwakil.androidide.plugins.LexerGeneratorPlugin
-import dev.mutwakil.androidide.build.config.BuildConfig
+import dev.apexstudio.ide.plugins.LexerGeneratorPlugin
+import dev.apexstudio.ide.build.config.BuildConfig
 
 plugins {
   id("java-library")

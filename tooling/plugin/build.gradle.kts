@@ -16,10 +16,10 @@
  */
 
 
-import dev.mutwakil.androidide.build.config.AGP_VERSION_MINIMUM
-import dev.mutwakil.androidide.build.config.BuildConfig
-import dev.mutwakil.androidide.build.config.MVN_GROUP_ID
-import dev.mutwakil.androidide.build.config.ProjectConfig
+import dev.apexstudio.ide.build.config.AGP_VERSION_MINIMUM
+import dev.apexstudio.ide.build.config.BuildConfig
+import dev.apexstudio.ide.build.config.MVN_GROUP_ID
+import dev.apexstudio.ide.build.config.ProjectConfig
 
 plugins {
   id("java-gradle-plugin")

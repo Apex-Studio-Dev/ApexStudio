@@ -1,4 +1,4 @@
-import dev.mutwakil.androidide.build.config.BuildConfig
+import dev.apexstudio.ide.build.config.BuildConfig
 
 plugins {
 	alias(libs.plugins.android.library)

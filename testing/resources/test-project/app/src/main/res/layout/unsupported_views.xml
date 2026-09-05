@@ -5,18 +5,18 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <dev.mutwakil.androidide.inflater.unsupported.UnsupportedView
+    <dev.apexstudio.ide.inflater.unsupported.UnsupportedView
         android:id="@+id/myView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"/>
 
-    <dev.mutwakil.androidide.inflater.unsupported.UnsupportedLayout
+    <dev.apexstudio.ide.inflater.unsupported.UnsupportedLayout
         android:id="@+id/myLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <dev.mutwakil.androidide.inflater.unsupported.UnsupportedLayout
+    <dev.apexstudio.ide.inflater.unsupported.UnsupportedLayout
         android:id="@+id/myLayout_withSupportedChildren"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -33,25 +33,25 @@
             android:layout_height="match_parent"
         />
 
-    </dev.mutwakil.androidide.inflater.unsupported.UnsupportedLayout>
+    </dev.apexstudio.ide.inflater.unsupported.UnsupportedLayout>
 
-    <dev.mutwakil.androidide.inflater.unsupported.UnsupportedLayout
+    <dev.apexstudio.ide.inflater.unsupported.UnsupportedLayout
         android:id="@+id/myLayout_withUnsupportedChildren"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <dev.mutwakil.androidide.inflater.unsupported.UnsupportedView
+        <dev.apexstudio.ide.inflater.unsupported.UnsupportedView
             android:id="@+id/image_1"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
         />
 
-        <dev.mutwakil.androidide.inflater.unsupported.UnsupportedView
+        <dev.apexstudio.ide.inflater.unsupported.UnsupportedView
             android:id="@+id/image_2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
         />
 
-    </dev.mutwakil.androidide.inflater.unsupported.UnsupportedLayout>
+    </dev.apexstudio.ide.inflater.unsupported.UnsupportedLayout>
 
 </LinearLayout>

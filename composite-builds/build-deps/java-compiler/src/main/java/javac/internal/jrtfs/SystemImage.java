@@ -35,7 +35,7 @@ import java.nio.file.Path;
 import javac.internal.jimage.ImageReader;
 import javac.internal.jimage.ImageReader.Node;
 
-import dev.mutwakil.androidide.javac.config.JavacConfigProvider;
+import dev.apexstudio.ide.javac.config.JavacConfigProvider;
 
 /**
  * @implNote This class needs to maintain JDK 8 source compatibility.

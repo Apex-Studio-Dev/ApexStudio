@@ -1,0 +1,151 @@
+package dev.apexstudio.ide.lsp.kotlin.actions
+
+import dev.apexstudio.ide.actions.ActionData
+import dev.apexstudio.ide.actions.has
+import dev.apexstudio.ide.actions.markInvisible
+import dev.apexstudio.ide.actions.newDialogBuilder
+import dev.apexstudio.ide.actions.requireFile
+import dev.apexstudio.ide.lsp.kotlin.compiler.AbstractCompilationEnvironment
+import dev.apexstudio.ide.lsp.kotlin.compiler.index.findSymbolBySimpleName
+import dev.apexstudio.ide.lsp.kotlin.diagnostic.DiagnosticAction
+import dev.apexstudio.ide.lsp.kotlin.utils.insertImport
+import dev.apexstudio.ide.lsp.models.CodeActionItem
+import dev.apexstudio.ide.lsp.models.CodeActionKind
+import dev.apexstudio.ide.lsp.models.Command
+import dev.apexstudio.ide.lsp.models.DiagnosticItem
+import dev.apexstudio.ide.lsp.models.DocumentChange
+import dev.apexstudio.ide.lsp.models.TextEdit
+import dev.apexstudio.ide.resources.R
+import dev.apexstudio.ide.utils.flashError
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.nio.file.Path
+
+class AddImportAction : BaseKotlinCodeAction() {
+	companion object {
+		const val ID = "ide.editor.lsp.kt.diagnostics.addImport"
+	}
+
+	override var titleTextRes: Int = R.string.action_import_classes
+
+	override val id: String = ID
+	override var label: String = ""
+
+	override fun prepare(data: ActionData) {
+		super.prepare(data)
+
+		if (!visible || !data.has<DiagnosticItem>()) {
+			markInvisible()
+			return
+		}
+
+		// Optimistic visibility: decide from the in-memory unresolved-reference marker only. The
+		// importable-classifier resolution runs in the background execAction; doing it here would be
+		// main-thread SQLite I/O, because fillMenu() calls prepare() synchronously on the UI thread.
+		val resolveReferenceActionDiagnostic =
+			data.findDiagnosticExtra<DiagnosticAction.ResolveReference>()
+		if (resolveReferenceActionDiagnostic == null) {
+			markInvisible()
+			return
+		}
+	}
+
+	override suspend fun execAction(data: ActionData): Map<String, List<TextEdit>> {
+		val (_, extra) =
+			data.findDiagnosticExtra<DiagnosticAction.ResolveReference>()
+				?: return emptyMap()
+
+		val (env, action) = extra
+		val nioPath = data.requireFile().toPath()
+		return withContext(Dispatchers.IO) {
+			computeImportCandidates(env, nioPath, action.referenceName)
+		}
+	}
+
+	/**
+	 * Resolves [referenceName] to the importable classifiers known to [env], each mapped to the edits
+	 * that import it into the file at [nioPath]. Keyed by fully-qualified name, which is what
+	 * [postExec] shows in the chooser -- so two index entries for the same class collapse into one
+	 * entry instead of duplicating it.
+	 *
+	 * Blocking: does the `getCurrentKtFile` `.get()` and a SQLite-backed index query, so callers must
+	 * stay off the main thread ([execAction] wraps it in [Dispatchers.IO]).
+	 */
+	internal fun computeImportCandidates(
+		env: AbstractCompilationEnvironment,
+		nioPath: Path,
+		referenceName: String,
+	): Map<String, List<TextEdit>> {
+		val ktFile =
+			env.ktSymbolIndex
+				.getCurrentKtFile(nioPath)
+				.get() ?: return emptyMap()
+
+		return env.ktSymbolIndex
+			.findSymbolBySimpleName(referenceName, limit = 0)
+			.filter { it.kind.isClassifier }
+			.associate { it.fqName to insertImport(ktFile, it.fqName) }
+	}
+
+	override fun postExec(
+		data: ActionData,
+		result: Any,
+	) {
+		super.postExec(data, result)
+
+		if (result !is Map<*, *>) {
+			return
+		}
+
+		@Suppress("UNCHECKED_CAST")
+		result as Map<String, List<TextEdit>>
+
+		if (result.isEmpty()) {
+			logger.warn("No classifiers to import.")
+			flashError(R.string.msg_no_imports_found)
+			return
+		}
+
+		val client =
+			data.languageClient
+				?: run {
+					logger.warn("No language client set. Cannot complete action.")
+					return
+				}
+
+		val file = data.requireFile()
+		val nioPath = file.toPath()
+		val actions =
+			result
+				.map { (fqName, edits) ->
+					CodeActionItem(
+						title = fqName,
+						changes = listOf(DocumentChange(file = nioPath, edits = edits)),
+						kind = CodeActionKind.QuickFix,
+						command = Command.CMD_FORMAT_CODE,
+					)
+				}
+
+		when (actions.size) {
+			0 -> {
+				logger.error("No code actions found. Cannot completion action.")
+			}
+
+			1 -> {
+				client.performCodeAction(actions[0])
+			}
+
+			else -> {
+				newDialogBuilder(data)
+					.setTitle(label)
+					.setItems(actions.map { it.title }.toTypedArray()) { dialog, which ->
+						dialog.dismiss()
+						actions.getOrNull(which)?.also { client.performCodeAction(it) }
+							?: run {
+								logger.error("Index $which is out of bounds for actions of size ${actions.size}")
+							}
+					}.show()
+			}
+		}
+	}
+}

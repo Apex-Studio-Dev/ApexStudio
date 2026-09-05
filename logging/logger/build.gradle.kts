@@ -16,7 +16,7 @@
  */
 
 
-import dev.mutwakil.androidide.plugins.NoDesugarPlugin
+import dev.apexstudio.ide.plugins.NoDesugarPlugin
 import groovy.util.Node
 
 @Suppress("JavaPluginLanguageLevel")
@@ -75,7 +75,7 @@ mavenPublishing {
                 val groupId = dependency.get("groupId") as groovy.util.NodeList
                 val artifactId = dependency.get("artifactId") as groovy.util.NodeList
 
-                groupId.text() == "dev.mutwakil.androidide.build" || artifactId.text() == "kotlin-stdlib-jdk8"
+                groupId.text() == "dev.apexstudio.ide.build" || artifactId.text() == "kotlin-stdlib-jdk8"
             }
         }
     }

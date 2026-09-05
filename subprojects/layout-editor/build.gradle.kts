@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.mutwakil.androidide.layouteditor"
+    namespace = "dev.apexstudio.ide.layouteditor"
 
     buildFeatures {
         viewBinding = true

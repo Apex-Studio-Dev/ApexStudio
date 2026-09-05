@@ -1,4 +1,4 @@
-package dev.mutwakil.androidide.lsp.java.partial;
+package dev.apexstudio.ide.lsp.java.partial;
 
 public class PartialReparserTest_template {
   public static void main(String[] args) {

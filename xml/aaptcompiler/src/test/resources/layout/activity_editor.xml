@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<dev.mutwakil.androidide.views.ContentTranslatingDrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<dev.apexstudio.ide.views.ContentTranslatingDrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   xmlns:aapt="http://schemas.android.com/aapt"
@@ -38,7 +38,7 @@
         android:indeterminate="true"
         app:indicatorColor="@color/secondaryColor" />
 
-      <dev.mutwakil.androidide.views.MaterialBanner
+      <dev.apexstudio.ide.views.MaterialBanner
         android:id="@+id/syncBanner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -104,7 +104,7 @@
 
     </ViewFlipper>
 
-    <dev.mutwakil.androidide.views.EditorBottomSheet
+    <dev.apexstudio.ide.views.EditorBottomSheet
       android:id="@+id/bottom_sheet"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
@@ -138,11 +138,11 @@
     <!-- When changing android:tag here, also change it in FileTreeFragment.kt -->
     <androidx.fragment.app.FragmentContainerView
       android:id="@+id/file_tree"
-      android:name="dev.mutwakil.androidide.fragments.sidebar.FileTreeFragment"
+      android:name="dev.apexstudio.ide.fragments.sidebar.FileTreeFragment"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:tag="editor.fileTree" />
 
   </com.google.android.material.navigation.NavigationView>
 
-</dev.mutwakil.androidide.views.ContentTranslatingDrawerLayout>
+</dev.apexstudio.ide.views.ContentTranslatingDrawerLayout>

@@ -68,7 +68,7 @@ dependencyResolutionManagement {
       this.name = build
       dependencySubstitution {
         for (module in modules) {
-          substitute(module("dev.mutwakil.androidide.build:${module}"))
+          substitute(module("dev.apexstudio.ide.build:${module}"))
             .using(project(":${module}"))
         }
       }

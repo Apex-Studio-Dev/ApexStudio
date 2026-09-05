@@ -47,8 +47,8 @@ import java.util.Set;
 
 import jdkx.tools.FileObject;
 
-import dev.mutwakil.androidide.javac.config.JavacConfigProvider;
-import dev.mutwakil.androidide.zipfs2.AndroidFsProvider;
+import dev.apexstudio.ide.javac.config.JavacConfigProvider;
+import dev.apexstudio.ide.zipfs2.AndroidFsProvider;
 import openjdk.tools.javac.file.RelativePath.RelativeDirectory;
 import openjdk.tools.javac.util.Context;
 import openjdk.tools.javac.util.PlatformUtils;

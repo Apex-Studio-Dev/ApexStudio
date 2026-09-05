@@ -1,6 +1,6 @@
 package com.android.aaptcompiler.android
 
-import dev.mutwakil.androidide.utils.intByteMapOf
+import dev.apexstudio.ide.utils.intByteMapOf
 
 internal val SCRIPT_CODES = arrayOf(
   /* 0  */ byteArrayOf('A'.code.toByte(), 'h'.code.toByte(), 'o'.code.toByte(), 'm'.code.toByte()),

@@ -20,8 +20,8 @@ package com.android.aaptcompiler
 import com.android.aaptcompiler.ResourceFile.Type.ProtoXml
 import com.android.aaptcompiler.ResourceFile.Type.Unknown
 import com.android.aaptcompiler.proto.serializeTableToPb
-import dev.mutwakil.androidide.layoutlib.resources.ResourceType
-import dev.mutwakil.androidide.layoutlib.resources.ResourceVisibility
+import dev.apexstudio.ide.layoutlib.resources.ResourceType
+import dev.apexstudio.ide.layoutlib.resources.ResourceVisibility
 import com.android.utils.FileUtils
 import java.io.File
 

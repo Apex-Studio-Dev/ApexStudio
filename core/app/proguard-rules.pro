@@ -14,10 +14,10 @@
 -keep class com.android.** { *; }
 
 # Tooling API classes
--keep class dev.mutwakil.androidide.tooling.** { *; }
+-keep class dev.apexstudio.ide.tooling.** { *; }
 
 # Builder model implementations
--keep class dev.mutwakil.androidide.builder.model.** { *; }
+-keep class dev.apexstudio.ide.builder.model.** { *; }
 
 # Eclipse
 -keep class org.eclipse.** { *; }
@@ -48,28 +48,28 @@
     io.github.rosemoe.sora.widget.component.EditorCompletionAdapter adapter;
     int currentSelection;
 }
--keep class dev.mutwakil.androidide.projects.util.StringSearch {
+-keep class dev.apexstudio.ide.projects.util.StringSearch {
     packageName(java.nio.file.Path);
 }
 -keep class * implements org.antlr.v4.runtime.Lexer {
     <init>(...);
 }
--keep class * extends dev.mutwakil.androidide.lsp.java.providers.completion.IJavaCompletionProvider {
+-keep class * extends dev.apexstudio.ide.lsp.java.providers.completion.IJavaCompletionProvider {
     <init>(...);
 }
--keep class dev.mutwakil.androidide.editor.api.IEditor { *; }
--keep class * extends dev.mutwakil.androidide.inflater.IViewAdapter { *; }
--keep class * extends dev.mutwakil.androidide.inflater.drawable.IDrawableParser {
+-keep class dev.apexstudio.ide.editor.api.IEditor { *; }
+-keep class * extends dev.apexstudio.ide.inflater.IViewAdapter { *; }
+-keep class * extends dev.apexstudio.ide.inflater.drawable.IDrawableParser {
     <init>(...);
     android.graphics.drawable.Drawable parse();
     android.graphics.drawable.Drawable parseDrawable();
 }
--keep class dev.mutwakil.androidide.utils.DialogUtils {  public <methods>; }
+-keep class dev.apexstudio.ide.utils.DialogUtils {  public <methods>; }
 
 # APK Metadata
--keep class dev.mutwakil.androidide.models.** { *; }
-#-keep class dev.mutwakil.androidide.models.ArtifactType { *; }
-#-keep class dev.mutwakil.androidide.models.MetadataElement { *; }
+-keep class dev.apexstudio.ide.models.** { *; }
+#-keep class dev.apexstudio.ide.models.ArtifactType { *; }
+#-keep class dev.apexstudio.ide.models.MetadataElement { *; }
 
 # Parcelable
 -keepclassmembers class * implements android.os.Parcelable {
@@ -78,7 +78,7 @@
 
 # Used in preferences
 -keep enum org.eclipse.lemminx.dom.builder.EmptyElements { *; }
--keep enum dev.mutwakil.androidide.xml.permissions.Permission { *; }
+-keep enum dev.apexstudio.ide.xml.permissions.Permission { *; }
 
 # Lots of native methods in tree-sitter
 # There are some fields as well that are accessed from native field
@@ -86,11 +86,11 @@
     native <methods>;
 }
 
--keep class dev.mutwakil.androidide.treesitter.** { *; }
+-keep class dev.apexstudio.ide.treesitter.** { *; }
 
 -keep class com.itsaky.androidide.treesitter.** { *; }
 
--keep class dev.mutwakil.androidide.** { *; }
+-keep class dev.apexstudio.ide.** { *; }
 
 # Retrofit 2
 -dontwarn retrofit2.**
@@ -106,7 +106,7 @@
 -dontwarn okhttp3.**
 
 # Stat uploader
--keep class dev.mutwakil.androidide.stats.** { *; }
+-keep class dev.apexstudio.ide.stats.** { *; }
 
 # Gson
 -keep class * extends com.google.gson.TypeAdapter
@@ -123,12 +123,12 @@
 -keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
 
 ## Themes
--keep enum dev.mutwakil.androidide.ui.themes.IDETheme {
+-keep enum dev.apexstudio.ide.ui.themes.IDETheme {
   *;
 }
 
 ## Contributor models - deserialized with GSON
--keep class * implements dev.mutwakil.androidide.contributors.Contributor {
+-keep class * implements dev.apexstudio.ide.contributors.Contributor {
   *;
 }
 
@@ -160,7 +160,7 @@
 
 ## R8 Kotlin metadata workaround for Kotlin 2.3.0 compatibility
 ## Suppresses D8 errors when parsing kotlin metadata for StopWatch inline functions
--keep class dev.mutwakil.androidide.utils.StopWatch { *; }
--keepclassmembers class dev.mutwakil.androidide.utils.StopWatch** { *; }
+-keep class dev.apexstudio.ide.utils.StopWatch { *; }
+-keepclassmembers class dev.apexstudio.ide.utils.StopWatch** { *; }
 
 -dontshrink

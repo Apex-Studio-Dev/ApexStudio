@@ -19,8 +19,8 @@
 
 
 
-import dev.mutwakil.androidide.build.config.BuildConfig
-import dev.mutwakil.androidide.plugins.TerminalBootstrapPackagesPlugin
+import dev.apexstudio.ide.build.config.BuildConfig
+import dev.apexstudio.ide.plugins.TerminalBootstrapPackagesPlugin
 
 plugins {
     id("com.android.library")

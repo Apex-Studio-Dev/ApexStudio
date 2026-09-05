@@ -20,7 +20,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    namespace 'dev.mutwakil.androidide.vectormaster'
+    namespace 'dev.apexstudio.ide.vectormaster'
 }
 
 dependencies {

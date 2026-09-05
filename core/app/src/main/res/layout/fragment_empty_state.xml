@@ -19,7 +19,7 @@
   android:layout_width="match_parent"
   android:layout_height="match_parent">
 
-  <dev.mutwakil.androidide.ui.EmptyView
+  <dev.apexstudio.ide.ui.EmptyView
     android:id="@+id/empty_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

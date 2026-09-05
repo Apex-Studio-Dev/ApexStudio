@@ -5,8 +5,8 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import dev.mutwakil.androidide.preferences.internal.GeneralPreferences;
-import dev.mutwakil.androidide.utils.ContextUtilsKt;
+import dev.apexstudio.ide.preferences.internal.GeneralPreferences;
+import dev.apexstudio.ide.utils.ContextUtilsKt;
 
 public class ThemeUtils {
 

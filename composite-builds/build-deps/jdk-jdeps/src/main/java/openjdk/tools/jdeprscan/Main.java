@@ -62,7 +62,7 @@ import jdkx.tools.StandardJavaFileManager;
 import jdkx.tools.StandardLocation;
 import jdkx.tools.ToolProvider;
 
-import dev.mutwakil.androidide.javac.config.JavacConfigProvider;
+import dev.apexstudio.ide.javac.config.JavacConfigProvider;
 import openjdk.tools.javac.file.JavacFileManager;
 import openjdk.tools.javac.platform.JDKPlatformProvider;
 

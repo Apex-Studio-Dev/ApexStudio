@@ -51,25 +51,25 @@ dependencies {
 
 gradlePlugin {
   plugins {
-    create("dev.mutwakil.androidide.build") {
-      id = "dev.mutwakil.androidide.build"
-      implementationClass = "dev.mutwakil.androidide.plugins.AndroidIDEPlugin"
+    create("dev.apexstudio.ide.build") {
+      id = "dev.apexstudio.ide.build"
+      implementationClass = "dev.apexstudio.ide.plugins.AndroidIDEPlugin"
     }
-    create("dev.mutwakil.androidide.core-app") {
-      id = "dev.mutwakil.androidide.core-app"
-      implementationClass = "dev.mutwakil.androidide.plugins.AndroidIDECoreAppPlugin"
+    create("dev.apexstudio.ide.core-app") {
+      id = "dev.apexstudio.ide.core-app"
+      implementationClass = "dev.apexstudio.ide.plugins.AndroidIDECoreAppPlugin"
     }
-    create("dev.mutwakil.androidide.build.propsparser") {
-      id = "dev.mutwakil.androidide.build.propsparser"
-      implementationClass = "dev.mutwakil.androidide.plugins.PropertiesParserPlugin"
+    create("dev.apexstudio.ide.build.propsparser") {
+      id = "dev.apexstudio.ide.build.propsparser"
+      implementationClass = "dev.apexstudio.ide.plugins.PropertiesParserPlugin"
     }
-    create("dev.mutwakil.androidide.build.lexergenerator") {
-      id = "dev.mutwakil.androidide.build.lexergenerator"
-      implementationClass = "dev.mutwakil.androidide.plugins.LexerGeneratorPlugin"
+    create("dev.apexstudio.ide.build.lexergenerator") {
+      id = "dev.apexstudio.ide.build.lexergenerator"
+      implementationClass = "dev.apexstudio.ide.plugins.LexerGeneratorPlugin"
     }
-    create("dev.mutwakil.androidide.build.external-assets") {
-      id = "dev.mutwakil.androidide.build.external-assets"
-      implementationClass = "dev.mutwakil.androidide.plugins.ExternalAssetsPlugin"
+    create("dev.apexstudio.ide.build.external-assets") {
+      id = "dev.apexstudio.ide.build.external-assets"
+      implementationClass = "dev.apexstudio.ide.plugins.ExternalAssetsPlugin"
     }
   }
 }

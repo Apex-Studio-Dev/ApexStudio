@@ -17,14 +17,14 @@
 
 @file:Suppress("UnstableApiUsage")
 
-import dev.mutwakil.androidide.build.config.BuildConfig
-import dev.mutwakil.androidide.build.config.FDroidConfig
-import dev.mutwakil.androidide.build.config.MVN_GROUP_ID
-import dev.mutwakil.androidide.build.config.publishingVersion
-import dev.mutwakil.androidide.plugins.AndroidIDEPlugin
-import dev.mutwakil.androidide.plugins.conf.configureAndroidModule
-import dev.mutwakil.androidide.plugins.conf.configureJavaModule
-import dev.mutwakil.androidide.plugins.conf.configureMavenPublish
+import dev.apexstudio.ide.build.config.BuildConfig
+import dev.apexstudio.ide.build.config.FDroidConfig
+import dev.apexstudio.ide.build.config.MVN_GROUP_ID
+import dev.apexstudio.ide.build.config.publishingVersion
+import dev.apexstudio.ide.plugins.AndroidIDEPlugin
+import dev.apexstudio.ide.plugins.conf.configureAndroidModule
+import dev.apexstudio.ide.plugins.conf.configureJavaModule
+import dev.apexstudio.ide.plugins.conf.configureMavenPublish
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -47,7 +47,7 @@ buildscript {
     }
 }
 
-// Root project has 'dev.mutwakil.androidide' as the group ID
+// Root project has 'dev.apexstudio.ide' as the group ID
 project.group = MVN_GROUP_ID
 
 subprojects {

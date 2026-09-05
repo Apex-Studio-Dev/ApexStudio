@@ -16,8 +16,8 @@
  */
 
 
-import dev.mutwakil.androidide.plugins.NoDesugarPlugin
-import dev.mutwakil.androidide.build.config.BuildConfig
+import dev.apexstudio.ide.plugins.NoDesugarPlugin
+import dev.apexstudio.ide.build.config.BuildConfig
 
 plugins {
   id("com.android.library")

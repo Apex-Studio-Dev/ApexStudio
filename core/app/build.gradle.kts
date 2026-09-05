@@ -17,18 +17,18 @@
 
 @file:Suppress("UnstableApiUsage")
 
-import dev.mutwakil.androidide.build.config.BuildConfig
-import dev.mutwakil.androidide.desugaring.utils.JavaIOReplacements.applyJavaIOReplacements
-import dev.mutwakil.androidide.plugins.AndroidIDEAssetsPlugin
+import dev.apexstudio.ide.build.config.BuildConfig
+import dev.apexstudio.ide.desugaring.utils.JavaIOReplacements.applyJavaIOReplacements
+import dev.apexstudio.ide.plugins.AndroidIDEAssetsPlugin
 
 plugins {
-    id("dev.mutwakil.androidide.core-app")
+    id("dev.apexstudio.ide.core-app")
     id("com.android.application")
     id("kotlin-android")
     id("kotlin-kapt")
     id("kotlin-parcelize")
     id("androidx.navigation.safeargs.kotlin")
-    id("dev.mutwakil.androidide.desugaring")
+    id("dev.apexstudio.ide.desugaring")
 }
 
 apply {
