@@ -1,0 +1,274 @@
+#!/usr/bin/env bash
+# ApexStudio toolchain installer.
+#
+# Manifest-driven (jq). Installs, from the bundled toolchain-manifest.json:
+#   - JDK (openjdk via apt) and aapt2 (apt) from the Apex apt repository
+#   - Android cmdline-tools (sdkmanager) and SDK platforms / build-tools
+#   - NDK and CMake (multi-version, coexisting under $ANDROID_HOME)
+# Writes $PREFIX/etc/ide-environment.properties read by the app at startup.
+#
+# Usage:
+#   install-toolchain.sh [--manifest <path>] [--jdk <17|21|25>] \
+#     [--platform <api>|all] [--build-tools <ver>|all] \
+#     [--ndk <ver>|all|none] [--cmake <ver>|all|none]
+#   Defaults: --jdk 21 --platform 37 --build-tools 37.0.0 --ndk none --cmake none
+#   Repeat a flag to install multiple versions, or pass one of all.
+set -eu
+
+MANIFEST="$(dirname "$0")/toolchain-manifest.json"
+JDK=""
+PLATFORMS=()
+BUILD_TOOLS=()
+NDKS=("none")
+CMAKES=("none")
+
+usage() { echo "usage: $0 [options]" >&2; exit 1; }
+
+log() { echo "[install-toolchain] $*"; }
+
+err() { echo "[install-toolchain] ERROR: $*" >&2; exit 1; }
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --manifest) [ $# -ge 2 ] || usage; MANIFEST="$2"; shift 2 ;;
+    --jdk) [ $# -ge 2 ] || usage; JDK="$2"; shift 2 ;;
+    --platform) [ $# -ge 2 ] || usage; PLATFORMS+=("$2"); shift 2 ;;
+    --build-tools) [ $# -ge 2 ] || usage; BUILD_TOOLS+=("$2"); shift 2 ;;
+    --ndk) [ $# -ge 2 ] || usage; NDKS+=("$2"); shift 2 ;;
+    --cmake) [ $# -ge 2 ] || usage; CMAKES+=("$2"); shift 2 ;;
+    *) usage ;;
+  esac
+done
+
+: "${PREFIX:?PREFIX must be set (e.g. /data/data/dev.apexstudio.ide/files/usr)}"
+: "${HOME:?HOME must be set}"
+
+[ -f "$MANIFEST" ] || err "manifest not found: $MANIFEST"
+command -v jq >/dev/null 2>&1 || err "jq is missing from the bootstrap"
+
+SDK_DIR="${ANDROID_HOME:-$HOME/android-sdk}"
+CMDTOOLS_DIR="$SDK_DIR/cmdline-tools/latest"
+SDKMANAGER="$CMDTOOLS_DIR/bin/sdkmanager"
+IDE_ENV_FILE="$PREFIX/etc/ide-environment.properties"
+TMP="${TMPDIR:-$PREFIX/tmp}"
+
+[ -z "$JDK" ] && JDK="21"
+[ ${#PLATFORMS[@]} -eq 0 ] && PLATFORMS=("37")
+[ ${#BUILD_TOOLS[@]} -eq 0 ] && BUILD_TOOLS=("37.0.0")
+
+is_all() { [ "$1" = "all" ]; }
+
+json_array() { jq -r "$1" "$MANIFEST"; }
+
+in_manifest() { # <array-prop> <value>
+  json_array ".[\"$1\"][]" 2>/dev/null | grep -qx "$2"
+}
+
+jdk_pkg() { # <17|21|25> -> apt package name
+  case "$1" in
+    17) echo "openjdk-17" ;;
+    21) echo "openjdk-21" ;;
+    25) echo "openjdk-25-x" ;;
+    *) echo "openjdk-$1" ;;
+  esac
+}
+
+requested() { # <prop> <array...>; prints resolved versions (all -> manifest list) separated by newline
+  local prop="$1"; shift
+  local out=()
+  local item
+  for item in "$@"; do
+    if is_all "$item"; then
+      while IFS= read -r v; do out+=("$v"); done < <(json_array ".[\"$prop\"][]")
+    else
+      out+=("$item")
+    fi
+  done
+  printf '%s\n' "${out[@]}"
+}
+
+log "Using manifest: $MANIFEST"
+log "SDK dir: $SDK_DIR"
+log "Installing JDK $JDK, platforms: ${PLATFORMS[*]}, build-tools: ${BUILD_TOOLS[*]}, ndk: ${NDKS[*]}, cmake: ${CMAKES[*]}"
+
+# ---- 0. verify requested versions exist in the manifest ----
+in_manifest "jdk" "$JDK" || err "JDK $JDK is not listed in the manifest"
+while IFS= read -r api; do in_manifest "platforms" "$api" || err "platform android-$api is not listed in the manifest"; done \
+  < <(requested platforms "${PLATFORMS[@]}")
+while IFS= read -r bt; do in_manifest "build_tools" "$bt" || err "build-tools $bt is not listed in the manifest"; done \
+  < <(requested build_tools "${BUILD_TOOLS[@]}")
+while IFS= read -r ndk; do
+  is_all "$ndk" && continue
+  [ "$ndk" = "none" ] && continue
+  jq -er --arg v "$ndk" '.ndk[] | select(.version == $v) | .url' "$MANIFEST" >/dev/null || err "ndk $ndk is not listed in the manifest"
+done < <(printf '%s\n' "${NDKS[@]}")
+while IFS= read -r cma; do
+  is_all "$cma" && continue
+  [ "$cma" = "none" ] && continue
+  jq -er --arg v "$cma" '.cmake[] | select(.version == $v) | .url' "$MANIFEST" >/dev/null || err "cmake $cma is not listed in the manifest"
+done < <(printf '%s\n' "${CMAKES[@]}")
+
+# ---- 1. base packages + JDK + aapt2 from the Apex apt repo ----
+log "apt update"
+apt update
+APKGS=()
+for v in $(jdk_pkg "$JDK"); do APKGS+=("$v"); done
+APKGS+=(aapt2 jq tar unzip curl)
+log "apt install: ${APKGS[*]}"
+apt install -y "${APKGS[@]}" || err "apt install failed (is the Apex apt repository reachable?)"
+
+# ---- 2. scaffold the SDK layout ----
+mkdir -p "$SDK_DIR"/{cmdline-tools,platform-tools,platforms,build-tools,ndk,cmake,licenses} "$TMP"
+
+# ---- 3. cmdline-tools (sdkmanager) ----
+if [ ! -x "$SDKMANAGER" ]; then
+  CTOOLS_URL="$(json_array '.sdkmanager.url')"
+  log "Downloading cmdline-tools: $CTOOLS_URL"
+  CTOOLS_ZIP="$TMP/commandlinetools-linux.zip"
+  curl -L --fail --retry 3 -o "$CTOOLS_ZIP" "$CTOOLS_URL" || err "download of cmdline-tools failed"
+  rm -rf "$CMDTOOLS_DIR" "$TMP/ctools-staging"
+  mkdir -p "$CMDTOOLS_DIR" "$TMP/ctools-staging"
+  log "Unpacking cmdline-tools"
+  unzip -qq "$CTOOLS_ZIP" -d "$TMP/ctools-staging" || err "unzip of cmdline-tools failed"
+  # The zip contains a top-level cmdline-tools/ folder; flatten it into latest/.
+  if [ -d "$TMP/ctools-staging/cmdline-tools" ]; then
+    mv "$TMP/ctools-staging/cmdline-tools"/* "$CMDTOOLS_DIR"
+  else
+    mv "$TMP/ctools-staging"/* "$CMDTOOLS_DIR"
+  fi
+  rm -rf "$TMP/ctools-staging"
+  rm -f "$CTOOLS_ZIP"
+  chmod -R 755 "$CMDTOOLS_DIR/bin"
+  # sdkmanager/avdmanager are env shebang scripts; point at $PREFIX/bin/env so
+  # the Termux environment is used when the app launches them.
+  ENV_PATH="$(command -v env)"
+  for f in "$CMDTOOLS_DIR"/bin/*; do
+    [ -f "$f" ] || continue
+    head -1 "$f" | grep -q '^#!/usr/bin/env' || continue
+    rest="$(sed -n '1s|^#!/usr/bin/env||p' "$f")"
+    sed -i "1c#!$ENV_PATH$rest" "$f"
+  done
+else
+  log "cmdline-tools already present, skipping"
+fi
+
+# ---- 4. environment for sdkmanager ----
+export ANDROID_HOME="$SDK_DIR"
+export ANDROID_SDK_ROOT="$SDK_DIR"
+export ANDROID_USER_HOME="$HOME/.android"
+export JAVA_HOME="$PREFIX/lib/jvm/java-${JDK}-openjdk"
+[ -x "$JAVA_HOME/bin/java" ] || err "JDK missing at $JAVA_HOME"
+export PATH="$JAVA_HOME/bin:$CMDTOOLS_DIR/bin:$SDK_DIR/platform-tools:$PATH"
+
+# ---- 5. licenses ----
+log "Accepting SDK licenses"
+PATH="$CMDTOOLS_DIR/bin:$SDK_DIR/platform-tools:$PATH" yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+
+# ---- 6. platforms + build-tools ----
+PLATFORM_PKGS=()
+while IFS= read -r api; do PLATFORM_PKGS+=("platforms;android-$api"); done < <(requested platforms "${PLATFORMS[@]}")
+BT_PKGS=()
+while IFS= read -r bt; do BT_PKGS+=("build-tools;$bt"); done < <(requested build_tools "${BUILD_TOOLS[@]}")
+log "sdkmanager installing: ${PLATFORM_PKGS[*]} ${BT_PKGS[*]}"
+"$SDKMANAGER" "${PLATFORM_PKGS[@]}" "${BT_PKGS[@]}" || err "sdkmanager install failed"
+
+# ---- 7. NDK (musl builds, need symlink fixes for the Gradle layout) ----
+install_ndk() {
+  local ndk="$1"
+  local url
+  url="$(jq -r --arg v "$ndk" '.ndk[] | select(.version == $v) | .url' "$MANIFEST")"
+  local file="$TMP/ndk-$ndk.tar.xz"
+  if [ -f "$SDK_DIR/ndk/$ndk/source.properties" ]; then
+    log "NDK $ndk already installed, skipping"
+    return
+  fi
+  log "Downloading NDK $ndk: $url"
+  curl -L --fail --retry 3 -o "$file" "$url" || err "download of NDK $ndk failed"
+  log "Extracting NDK $ndk"
+  rm -rf "$TMP/ndk-extract"
+  mkdir -p "$TMP/ndk-extract"
+  tar --no-same-owner -xf "$file" -C "$TMP/ndk-extract" || err "extract of NDK $ndk failed"
+  local src
+  src="$(find "$TMP/ndk-extract" -maxdepth 1 -type d -name 'android-ndk-*' | head -1)"
+  [ -n "$src" ] || src="$TMP/ndk-extract/$ndk"
+  [ -d "$src" ] || err "could not locate extracted NDK dir"
+  rm -rf "$SDK_DIR/ndk/$ndk"
+  mv "$src" "$SDK_DIR/ndk/$ndk"
+  rm -rf "$TMP/ndk-extract" "$file"
+  # musl builds ship linux-arm64 prebuilts; Gradle looks for linux-aarch64.
+  local d
+  for d in "$SDK_DIR/ndk/$ndk/toolchains/llvm/prebuilt" "$SDK_DIR/ndk/$ndk/prebuilt" "$SDK_DIR/ndk/$ndk/shader-tools"; do
+    [ -d "$d" ] && { [ -e "$d/linux-aarch64" ] || ln -s linux-arm64 "$d/linux-aarch64"; }
+  done
+  # Expose the exact revision dir (Gradle resolves the NDK by Pkg.Revision).
+  local rev
+  rev="$(sed -n 's/^Pkg.Revision[[:space:]]*=[[:space:]]*//p' "$SDK_DIR/ndk/$ndk/source.properties" 2>/dev/null | head -1)"
+  if [ -n "$rev" ] && [ "$rev" != "$ndk" ]; then
+    ln -sfn "$ndk" "$SDK_DIR/ndk/$rev"
+  fi
+  log "NDK $ndk installed"
+}
+
+install_cmake() {
+  local cma="$1"
+  local url kind
+  url="$(jq -r --arg v "$cma" '.cmake[] | select(.version == $v) | .url' "$MANIFEST")"
+  kind="$(jq -r --arg v "$cma" '.cmake[] | select(.version == $v) | .kind' "$MANIFEST")"
+  if [ -x "$SDK_DIR/cmake/$cma/bin/cmake" ]; then
+    log "CMake $cma already installed, skipping"
+    return
+  fi
+  log "Downloading CMake $cma: $url"
+  local file="$TMP/cmake-$cma"
+  curl -L --fail --retry 3 -o "$file" "$url" || err "download of CMake $cma failed"
+  log "Extracting CMake $cma"
+  rm -rf "$SDK_DIR/cmake/$cma"
+  mkdir -p "$SDK_DIR/cmake/$cma"
+  case "$kind" in
+    zip)
+      unzip -qq "$file" -d "$SDK_DIR/cmake/$cma" || { unzip -qq -o "$file" -d "$SDK_DIR/cmake/$cma" || err "unzip of CMake $cma failed"; }
+      ;;
+    *)
+      tar -xf "$file" -C "$SDK_DIR/cmake/$cma" --strip-components=1 \
+        || tar -xf "$file" -C "$SDK_DIR/cmake/$cma" \
+        || err "extract of CMake $cma failed"
+      ;;
+  esac
+  chmod -R +x "$SDK_DIR/cmake/$cma/bin" 2>/dev/null || true
+  rm -f "$file"
+  log "CMake $cma installed"
+}
+
+while IFS= read -r ndk; do
+  [ "$ndk" = "none" ] && continue
+  is_all "$ndk" && { while IFS= read -r v; do install_ndk "$v"; done < <(json_array '.ndk[].version'); continue; }
+  install_ndk "$ndk"
+done < <(printf '%s\n' "${NDKS[@]}")
+
+while IFS= read -r cma; do
+  [ "$cma" = "none" ] && continue
+  is_all "$cma" && { while IFS= read -r v; do install_cmake "$v"; done < <(json_array '.cmake[].version'); continue; }
+  install_cmake "$cma"
+done < <(printf '%s\n' "${CMAKES[@]}")
+
+# ---- 8. persist environment for the app ----
+log "Writing $IDE_ENV_FILE"
+{
+  echo "# Generated by ApexStudio install-toolchain"
+  echo "JAVA_HOME=$PREFIX/lib/jvm/java-$JDK-openjdk"
+  echo "ANDROID_HOME=$SDK_DIR"
+} > "$IDE_ENV_FILE"
+
+# ---- 9. let the Gradle build use the standalone aapt2 from apt ----
+[ -d "$HOME/.gradle" ] || mkdir -p "$HOME/.gradle"
+GP="$HOME/.gradle/gradle.properties"
+touch "$GP"
+if ! grep -q 'android.aapt2FromMavenOverride' "$GP"; then
+  {
+    echo ""
+    echo "# ApexStudio: use standalone aapt2 (from apt) instead of the Gradle-bundled one"
+    echo "android.aapt2FromMavenOverride=$PREFIX/bin/aapt2"
+  } >> "$GP"
+fi
+
+log "Toolchain setup complete"

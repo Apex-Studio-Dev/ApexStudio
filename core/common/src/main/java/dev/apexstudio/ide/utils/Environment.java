@@ -26,7 +26,11 @@ import com.blankj.utilcode.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.UUID;
 
@@ -100,6 +104,7 @@ public final class Environment {
 
     ANDROID_HOME = new File(HOME, "android-sdk");
     JAVA_HOME = new File(PREFIX, "lib/jvm/java-21-openjdk");
+    applyIdeEnvironment(new File(new File(PREFIX, "etc"), "ide-environment.properties"));
 
     JAVA = new File(JAVA_HOME, "bin/java");
     BASH_SHELL = new File(BIN_DIR, "bash");
@@ -125,6 +130,44 @@ public final class Environment {
   public static void setExecutable(@NonNull final File file) {
     if (!file.setExecutable(true)) {
       LOG.error("Unable to set executable permissions to file: {}", file);
+    }
+  }
+
+  /**
+   * Applies the environment written by {@code install-toolchain.sh} at
+   * {@code $PREFIX/etc/ide-environment.properties} (JAVA_HOME, ANDROID_HOME).
+   * Lets the setup choose which JDK/SDK to use.
+   */
+  private static void applyIdeEnvironment(File file) {
+    if (!file.isFile()) {
+      return;
+    }
+
+    try (BufferedReader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        int index = line.indexOf('=');
+        if (index <= 0) {
+          continue;
+        }
+        final String key = line.substring(0, index).trim();
+        final String value = line.substring(index + 1).trim();
+        if (value.isEmpty()) {
+          continue;
+        }
+        switch (key) {
+          case "JAVA_HOME":
+            JAVA_HOME = new File(value);
+            break;
+          case "ANDROID_HOME":
+            ANDROID_HOME = new File(value);
+            break;
+          default:
+            break;
+        }
+      }
+    } catch (IOException e) {
+      LOG.error("Failed to read IDE environment file: {}", file, e);
     }
   }
 

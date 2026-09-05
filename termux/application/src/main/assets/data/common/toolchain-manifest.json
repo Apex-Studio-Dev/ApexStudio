@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "comment": "ApexStudio toolchain catalog. Bundled into the APK and used by install-toolchain.sh. Update URLs/sha256 in every release.",
+  "jdk": ["17", "21", "25"],
+  "sdkmanager": {
+    "url": "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip",
+    "sha256": ""
+  },
+  "platforms": ["37", "36", "35", "34", "33", "32", "31", "30"],
+  "build_tools": ["37.0.0", "36.0.0", "35.0.0", "34.0.0", "33.0.2", "32.0.0", "31.0.0", "30.0.3"],
+  "ndk": [
+    {
+      "version": "r30-beta3",
+      "display": "r30 (beta3)",
+      "url": "https://github.com/HomuHomu833/android-ndk-custom/releases/download/r30/android-ndk-r30-beta3-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    },
+    {
+      "version": "r29",
+      "display": "r29",
+      "url": "https://github.com/HomuHomu833/android-ndk-custom/releases/download/r29/android-ndk-r29-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    },
+    {
+      "version": "r28c",
+      "display": "r28c",
+      "url": "https://github.com/HomuHomu833/android-ndk-custom/releases/download/r28/android-ndk-r28c-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    },
+    {
+      "version": "r27d",
+      "display": "r27d",
+      "url": "https://github.com/HomuHomu833/android-ndk-custom/releases/download/r27/android-ndk-r27d-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    },
+    {
+      "version": "r26d",
+      "display": "r26d",
+      "url": "https://github.com/HomuHomu833/android-ndk-custom/releases/download/r26/android-ndk-r26d-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    }
+  ],
+  "cmake": [
+    {
+      "version": "4.1.2",
+      "display": "4.1.2",
+      "kind": "musl",
+      "url": "https://github.com/HomuHomu833/cmake-custom/releases/download/4.1.2/cmake-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    },
+    {
+      "version": "4.1.1",
+      "display": "4.1.1",
+      "kind": "musl",
+      "url": "https://github.com/HomuHomu833/cmake-custom/releases/download/4.1.1/cmake-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    },
+    {
+      "version": "4.1.0",
+      "display": "4.1.0",
+      "kind": "musl",
+      "url": "https://github.com/HomuHomu833/cmake-custom/releases/download/4.1.0/cmake-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    },
+    {
+      "version": "4.0.3",
+      "display": "4.0.3",
+      "kind": "musl",
+      "url": "https://github.com/HomuHomu833/cmake-custom/releases/download/4.0.3/cmake-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    },
+    {
+      "version": "4.0.2",
+      "display": "4.0.2",
+      "kind": "musl",
+      "url": "https://github.com/HomuHomu833/cmake-custom/releases/download/4.0.2/cmake-aarch64-linux-musl.tar.xz",
+      "sha256": ""
+    },
+    {
+      "version": "3.25.1",
+      "display": "3.25.1",
+      "kind": "zip",
+      "url": "https://github.com/MrIkso/AndroidIDE-NDK/releases/download/cmake/cmake-3.25.1-android-aarch64.zip",
+      "sha256": ""
+    },
+    {
+      "version": "3.22.1",
+      "display": "3.22.1",
+      "kind": "zip",
+      "url": "https://github.com/MrIkso/AndroidIDE-NDK/releases/download/cmake/cmake-3.22.1-android-aarch64.zip",
+      "sha256": ""
+    },
+    {
+      "version": "3.18.1",
+      "display": "3.18.1",
+      "kind": "zip",
+      "url": "https://github.com/MrIkso/AndroidIDE-NDK/releases/download/cmake/cmake-3.18.1-android-aarch64.zip",
+      "sha256": ""
+    },
+    {
+      "version": "3.10.2",
+      "display": "3.10.2",
+      "kind": "zip",
+      "url": "https://github.com/MrIkso/AndroidIDE-NDK/releases/download/cmake/cmake-3.10.2-android-aarch64.zip",
+      "sha256": ""
+    }
+  ]
+}
