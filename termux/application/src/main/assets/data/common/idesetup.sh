@@ -401,7 +401,7 @@ download_comp_zip "Android SDK" ".android_sdk" "$install_dir" "android-sdk"
 print_info "Installing package: 'openjdk-$jdk_version'"
 install_packages "openjdk-$jdk_version" && print_info "JDK $jdk_version has been installed."
 
-jdk_dir="$SYSROOT/lin/jvm/java-21-openjdk"
+jdk_dir="$SYSROOT/lib/jvm/java-$jdk_version-openjdk"
 
 print_info "Updating ide-environment.properties..."
 print_info "JAVA_HOME=$jdk_dir"
