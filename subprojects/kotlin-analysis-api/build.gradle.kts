@@ -1,10 +1,10 @@
-import dev.mutwakil.androidide.build.config.BuildConfig
-import dev.mutwakil.androidide.plugins.extension.AssetSource
+import dev.apexstudio.ide.build.config.BuildConfig
+import dev.apexstudio.ide.plugins.extension.AssetSource
 
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    id("dev.mutwakil.androidide.build.external-assets")
+    id("dev.apexstudio.ide.build.external-assets")
 }
 
 android {
@@ -22,7 +22,7 @@ kotlin {
     }
 }
 
-val ktAndroidRepo = "https://github.com/AndroidIDE-Dev/kotlin-android"
+val ktAndroidRepo = "https://github.com/Apex-Studio-Dev/kotlin-android"
 val ktAndroidVersion = "2.3.255"
 val ktAndroidTag = "v${ktAndroidVersion}-d9775f9"
 val ktAndroidJarName = "analysis-api-standalone-embeddable-for-ide-${ktAndroidVersion}-SNAPSHOT.jar"

@@ -17,5 +17,8 @@
 
 <resources>
   <!--  Required by F-Droid-->
-  <string name="app_name" translatable="false">AndroidIDE-Dev</string>
+  <string name="app_name" translatable="false">ApexStudio</string>
+  <string name="title_setup_not_completed">Setup not completed</string>
+  <string name="msg_setup_not_completed">Install JDK and the Android SDK to build projects on this device.</string>
+  <string name="action_setup">Setup</string>
 </resources>

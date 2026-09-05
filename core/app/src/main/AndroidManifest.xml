@@ -7,11 +7,11 @@
   <permission
     android:description="@string/permdesc_bind_logger_service"
     android:label="@string/permlab_bind_logger_service"
-    android:name="dev.mutwakil.androidide.permission.BIND_LOG_SERVICE"
+    android:name="dev.apexstudio.ide.permission.BIND_LOG_SERVICE"
     android:protectionLevel="normal"
     tools:ignore="ManifestOrder" />
 
-  <uses-permission android:name="dev.mutwakil.androidide.permission.BIND_LOG_SERVICE" />
+  <uses-permission android:name="dev.apexstudio.ide.permission.BIND_LOG_SERVICE" />
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -48,7 +48,7 @@
       android:name=".activities.CrashHandlerActivity"
       android:windowSoftInputMode="stateAlwaysHidden">
       <intent-filter>
-        <action android:name="dev.mutwakil.androidide.REPORT_CRASH" />
+        <action android:name="dev.apexstudio.ide.REPORT_CRASH" />
         <category android:name="android.intent.category.DEFAULT" />
       </intent-filter>
     </activity>
@@ -71,17 +71,19 @@
       android:theme="@style/Theme.AndroidIDE" />
     <activity
       android:configChanges="orientation|screenSize"
+      android:exported="false"
       android:launchMode="singleTop"
       android:name=".activities.editor.EditorActivityKt"/>
-    <activity android:name=".activities.PreferencesActivity" />
-    <activity android:name=".activities.AboutActivity" />
-    <activity android:name=".activities.ContributorsActivity" />
+    <activity android:exported="false" android:name=".activities.PreferencesActivity" />
+    <activity android:exported="false" android:name=".activities.AboutActivity" />
+    <activity android:exported="false" android:name=".activities.ContributorsActivity" />
     <activity
+      android:exported="false"
       android:name=".activities.TerminalActivity"
       android:windowSoftInputMode="adjustResize" />
 
     <provider
-      android:authorities="dev.mutwakil.androidide.documents"
+      android:authorities="dev.apexstudio.ide.documents"
       android:exported="true"
       android:grantUriPermissions="true"
       android:name=".provider.IDEDocumentsProvider"
@@ -107,20 +109,21 @@
       android:name=".services.InstallationResultReceiver"
       tools:ignore="ExportedReceiver">
       <intent-filter>
-        <action android:name="dev.mutwakil.androidide.installer.INSTALL_PACKAGE" />
+        <action android:name="dev.apexstudio.ide.installer.INSTALL_PACKAGE" />
       </intent-filter>
     </receiver>
 
     <service
       android:exported="false"
+      android:foregroundServiceType="dataSync"
       android:name=".services.builder.GradleBuildService" />
 
     <service
       android:exported="true"
       android:name=".services.log.LogReceiverService"
-      android:permission="dev.mutwakil.androidide.permission.BIND_LOG_SERVICE">
+      android:permission="dev.apexstudio.ide.permission.BIND_LOG_SERVICE">
       <intent-filter>
-        <action android:name="dev.mutwakil.androidide.LOG_SERVICE_ACTION" />
+        <action android:name="dev.apexstudio.ide.LOG_SERVICE_ACTION" />
       </intent-filter>
     </service>
     <service
