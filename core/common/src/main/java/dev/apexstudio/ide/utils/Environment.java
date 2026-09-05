@@ -89,7 +89,7 @@ public final class Environment {
       "tooling-api-all.jar");
     ANDROIDIDE_GRADLE_PLUGIN_JAR = new File(mkdirIfNotExists(new File(ANDROIDIDE_HOME, "plugin")),
             "androidide-gradle-plugin.jar");
-    AAPT2 = new File(ANDROIDIDE_HOME, "aapt2");
+    AAPT2 = new File(BIN_DIR, "aapt2");
     ANDROIDIDE_UI = mkdirIfNotExists(new File(ANDROIDIDE_HOME, "ui"));
     DOWNLOAD_KT_SCRIPT = new File(mkdirIfNotExists(new File(ANDROIDIDE_HOME, "scripts")),
             "download-kotlin-artifacts.sh");
