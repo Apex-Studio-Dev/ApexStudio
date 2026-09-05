@@ -173,12 +173,14 @@ log "sdkmanager installing: ${PLATFORM_PKGS[*]} ${BT_PKGS[*]}"
 "$SDKMANAGER" "${PLATFORM_PKGS[@]}" "${BT_PKGS[@]}" || err "sdkmanager install failed"
 
 # ---- 7. NDK (musl builds, need symlink fixes for the Gradle layout) ----
+# The install dir name is the embedded Pkg.Revision from source.properties
+# (e.g. r27d -> ndk/27.3.13750724), exactly how Gradle/AGP resolve the NDK.
 install_ndk() {
   local ndk="$1"
   local url
   url="$(jq -r --arg v "$ndk" '.ndk[] | select(.version == $v) | .url' "$MANIFEST")"
   local file="$TMP/ndk-$ndk.tar.xz"
-  if [ -f "$SDK_DIR/ndk/$ndk/source.properties" ]; then
+  if [ -e "$SDK_DIR/ndk/$ndk/source.properties" ]; then
     log "NDK $ndk already installed, skipping"
     return
   fi
@@ -192,21 +194,23 @@ install_ndk() {
   src="$(find "$TMP/ndk-extract" -maxdepth 1 -type d -name 'android-ndk-*' | head -1)"
   [ -n "$src" ] || src="$TMP/ndk-extract/$ndk"
   [ -d "$src" ] || err "could not locate extracted NDK dir"
-  rm -rf "$SDK_DIR/ndk/$ndk"
-  mv "$src" "$SDK_DIR/ndk/$ndk"
+  # Resolve the canonical revision BEFORE moving; it names the install dir.
+  local rev
+  rev="$(sed -n 's/^Pkg.Revision[[:space:]]*=[[:space:]]*//p' "$src/source.properties" 2>/dev/null | head -1)"
+  [ -n "$rev" ] || err "missing Pkg.Revision in source.properties for NDK $ndk"
+  rm -rf "$SDK_DIR/ndk/$ndk" "$SDK_DIR/ndk/$rev"
+  mv "$src" "$SDK_DIR/ndk/$rev"
   rm -rf "$TMP/ndk-extract" "$file"
   # musl builds ship linux-arm64 prebuilts; Gradle looks for linux-aarch64.
   local d
-  for d in "$SDK_DIR/ndk/$ndk/toolchains/llvm/prebuilt" "$SDK_DIR/ndk/$ndk/prebuilt" "$SDK_DIR/ndk/$ndk/shader-tools"; do
+  for d in "$SDK_DIR/ndk/$rev/toolchains/llvm/prebuilt" "$SDK_DIR/ndk/$rev/prebuilt" "$SDK_DIR/ndk/$rev/shader-tools"; do
     [ -d "$d" ] && { [ -e "$d/linux-aarch64" ] || ln -s linux-arm64 "$d/linux-aarch64"; }
   done
-  # Expose the exact revision dir (Gradle resolves the NDK by Pkg.Revision).
-  local rev
-  rev="$(sed -n 's/^Pkg.Revision[[:space:]]*=[[:space:]]*//p' "$SDK_DIR/ndk/$ndk/source.properties" 2>/dev/null | head -1)"
-  if [ -n "$rev" ] && [ "$rev" != "$ndk" ]; then
-    ln -sfn "$ndk" "$SDK_DIR/ndk/$rev"
+  # Keep the short version token (r27d/r29/...) as a symlink to the revision dir.
+  if [ "$rev" != "$ndk" ]; then
+    ln -sfn "$rev" "$SDK_DIR/ndk/$ndk"
   fi
-  log "NDK $ndk installed"
+  log "NDK $ndk installed as $rev"
 }
 
 install_cmake() {
