@@ -74,6 +74,7 @@
           android:orientation="vertical">
 
           <TextView
+            android:id="@+id/tv_banner_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/title_setup_not_completed"
@@ -81,6 +82,7 @@
             android:textStyle="bold" />
 
           <TextView
+            android:id="@+id/tv_banner_msg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/msg_setup_not_completed"

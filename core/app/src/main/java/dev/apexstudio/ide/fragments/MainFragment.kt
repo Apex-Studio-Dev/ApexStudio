@@ -60,9 +60,9 @@ class MainFragment : BaseFragment() {
     val actions = MainScreenAction.all().also { actions ->
       val onClick = { action: MainScreenAction, _: View ->
         when (action.id) {
-          MainScreenAction.ACTION_CREATE_PROJECT -> if (requireSetup()) showCreateProject()
-          MainScreenAction.ACTION_OPEN_PROJECT -> if (requireSetup()) showViewSavedProjects()
-          MainScreenAction.ACTION_CLONE_REPO -> if (requireSetup()) showCloneRepository()
+          MainScreenAction.ACTION_CREATE_PROJECT -> if (requireEnvSetup()) showCreateProject()
+          MainScreenAction.ACTION_OPEN_PROJECT -> if (requireEnvSetup()) showViewSavedProjects()
+          MainScreenAction.ACTION_CLONE_REPO -> if (requireEnvSetup()) showCloneRepository()
           MainScreenAction.ACTION_DELETE_PROJECT -> pickDirectoryForDeletion()
           MainScreenAction.ACTION_OPEN_TERMINAL -> if (requireSetup()) startActivity(
             Intent(requireActivity(), TerminalActivity::class.java))
@@ -97,6 +97,9 @@ class MainFragment : BaseFragment() {
 
   private fun requireSetup(): Boolean =
     (requireActivity() as MainActivity).requireBootstrapSetup()
+
+  private fun requireEnvSetup(): Boolean =
+    (requireActivity() as MainActivity).requireEnvPackagesSetup()
 
   override fun onDestroyView() {
     super.onDestroyView()

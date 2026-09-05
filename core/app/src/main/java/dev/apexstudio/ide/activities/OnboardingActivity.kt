@@ -28,6 +28,7 @@ import dev.apexstudio.ide.R
 import dev.apexstudio.ide.R.string
 import dev.apexstudio.ide.app.configuration.IDEBuildConfigProvider
 import dev.apexstudio.ide.app.configuration.IJdkDistributionProvider
+import dev.apexstudio.ide.fragments.onboarding.EnvPackagesFragment
 import dev.apexstudio.ide.fragments.onboarding.GreetingFragment
 import dev.apexstudio.ide.fragments.onboarding.IdeSetupConfigurationFragment
 import dev.apexstudio.ide.fragments.onboarding.OnboardingInfoFragment
@@ -119,6 +120,7 @@ class OnboardingActivity : AppIntro2() {
     }
 
     addSlide(SetupBootstrapFragment.newInstance(this))
+    addSlide(EnvPackagesFragment.newInstance(this))
     addSlide(IdeSetupConfigurationFragment.newInstance(this))
   }
 

@@ -28,6 +28,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.transition.TransitionManager
 import androidx.transition.doOnEnd
 import com.google.android.material.transition.MaterialSharedAxis
+import dev.apexstudio.ide.R
 import dev.apexstudio.ide.activities.editor.EditorActivityKt
 import dev.apexstudio.ide.app.EdgeToEdgeIDEActivity
 import dev.apexstudio.ide.databinding.ActivityMainBinding
@@ -37,6 +38,7 @@ import dev.apexstudio.ide.resources.R.string
 import dev.apexstudio.ide.roomData.recentproject.RecentProject
 import dev.apexstudio.ide.templates.ITemplateProvider
 import dev.apexstudio.ide.utils.DialogUtils
+import dev.apexstudio.ide.utils.EnvPackages
 import dev.apexstudio.ide.utils.flashInfo
 import dev.apexstudio.ide.utils.getCreatedTime
 import dev.apexstudio.ide.utils.getLastModifiedTime
@@ -120,10 +122,26 @@ class MainActivity : EdgeToEdgeIDEActivity() {
 
     private fun refreshSetupBanner() {
         lifecycleScope.launch {
-            val installed = withContext(Dispatchers.IO) {
-                TermuxInstaller.isBootstrapInstalled()
+            val (bootstrapInstalled, missing) = withContext(Dispatchers.IO) {
+                TermuxInstaller.isBootstrapInstalled() to EnvPackages.missingEnvPackages()
             }
-            binding.setupBanner.isVisible = !installed
+            when {
+                !bootstrapInstalled -> {
+                    binding.tvBannerTitle.setText(R.string.title_setup_not_completed)
+                    binding.tvBannerMsg.setText(R.string.msg_setup_not_completed)
+                    binding.setupBanner.isVisible = true
+                }
+
+                missing.isNotEmpty() -> {
+                    binding.tvBannerTitle.setText(R.string.title_env_not_completed)
+                    binding.tvBannerMsg.setText(
+                        getString(R.string.msg_env_missing, missing.joinToString(", ")),
+                    )
+                    binding.setupBanner.isVisible = true
+                }
+
+                else -> binding.setupBanner.isVisible = false
+            }
         }
     }
 
@@ -134,6 +152,19 @@ class MainActivity : EdgeToEdgeIDEActivity() {
     /** @return true if bootstrap is installed and the user may continue; otherwise opens the setup screen. */
     fun requireBootstrapSetup(): Boolean {
         if (TermuxInstaller.isBootstrapInstalled()) {
+            return true
+        }
+        launchIdeSetup()
+        return false
+    }
+
+    /** @return true if the environment packages are installed and the user may continue; otherwise opens the setup screen. */
+    fun requireEnvPackagesSetup(): Boolean {
+        if (!TermuxInstaller.isBootstrapInstalled()) {
+            launchIdeSetup()
+            return false
+        }
+        if (EnvPackages.areEnvPackagesInstalled()) {
             return true
         }
         launchIdeSetup()
@@ -212,6 +243,10 @@ class MainActivity : EdgeToEdgeIDEActivity() {
             return
         }
 
+        if (!EnvPackages.areEnvPackagesInstalled()) {
+            return
+        }
+
         if (!GeneralPreferences.autoOpenProjects) {
             return
         }
@@ -256,7 +291,7 @@ class MainActivity : EdgeToEdgeIDEActivity() {
         project: RecentProject? = null,
         hasTemplateIssues: Boolean = false,
     ) {
-        if (!requireBootstrapSetup()) {
+        if (!requireEnvPackagesSetup()) {
             return
         }
 

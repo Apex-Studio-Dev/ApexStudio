@@ -37,6 +37,17 @@
   <string name="msg_setup_bootstrap_installed">Bootstrap installed</string>
   <string name="msg_setup_bootstrap_wait">Please wait for the bootstrap installation to finish.</string>
 
+  <!--  Onboarding env packages slide-->
+  <string name="title_env_packages">Environment packages</string>
+  <string name="subtitle_env_packages">Install the JDK, aapt2 and command-line utilities needed to compile Android projects.</string>
+  <string name="msg_env_installing">Installing environment packages...</string>
+  <string name="msg_env_installed">Environment packages installed.</string>
+  <string name="msg_env_skipped">Environment packages skipped.</string>
+  <string name="title_env_not_completed">Environment not completed</string>
+  <string name="msg_env_missing">Missing environment packages: %1$s</string>
+  <string name="action_install">Install</string>
+  <string name="action_skip">Skip</string>
+
   <!--  Onboarding SDK manager slide-->
   <string name="title_install_tools_apex">SDK Manager</string>
   <string name="subtitle_install_tools_apex">Choose the toolchain components to install. Selections are installed when you press Done.</string>
