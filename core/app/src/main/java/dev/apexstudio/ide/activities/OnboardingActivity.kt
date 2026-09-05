@@ -29,8 +29,10 @@ import dev.apexstudio.ide.R.string
 import dev.apexstudio.ide.app.configuration.IDEBuildConfigProvider
 import dev.apexstudio.ide.app.configuration.IJdkDistributionProvider
 import dev.apexstudio.ide.fragments.onboarding.GreetingFragment
+import dev.apexstudio.ide.fragments.onboarding.IdeSetupConfigurationFragment
 import dev.apexstudio.ide.fragments.onboarding.OnboardingInfoFragment
 import dev.apexstudio.ide.fragments.onboarding.PermissionsFragment
+import dev.apexstudio.ide.fragments.onboarding.SetupBootstrapFragment
 import dev.apexstudio.ide.fragments.onboarding.StatisticsFragment
 import dev.apexstudio.ide.models.JdkDistribution
 import dev.apexstudio.ide.preferences.internal.StatPreferences
@@ -115,6 +117,19 @@ class OnboardingActivity : AppIntro2() {
     if (!PermissionsFragment.areAllPermissionsGranted(this)) {
       addSlide(PermissionsFragment.newInstance(this))
     }
+
+    addSlide(SetupBootstrapFragment.newInstance(this))
+    addSlide(IdeSetupConfigurationFragment.newInstance(this))
+  }
+
+  fun advanceToNextSlide() {
+    runOnUiThread {
+      try {
+        goToNextSlide()
+      } catch (t: Throwable) {
+        // ignore; the user can advance manually
+      }
+    }
   }
 
   override fun onResume() {
@@ -143,6 +158,21 @@ class OnboardingActivity : AppIntro2() {
 
     if (!TermuxInstaller.isBootstrapInstalled()) {
       startActivity(Intent(this, SetupActivity::class.java))
+      return
+    }
+
+    val sdkFragment = currentFragment as? IdeSetupConfigurationFragment
+    if (sdkFragment != null && sdkFragment.isInstalling) {
+      return
+    }
+    if (sdkFragment != null && sdkFragment.needsInstall()) {
+      sdkFragment.installToolchain {
+        runOnUiThread {
+          if (!isFinishing && !isDestroyed) {
+            tryNavigateToMainIfSetupIsCompleted()
+          }
+        }
+      }
       return
     }
 

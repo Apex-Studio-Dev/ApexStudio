@@ -1,20 +1,19 @@
 /*
- *  This file is part of AndroidIDE.
+ *  This file is part of ApexStudio.
  *
- *  AndroidIDE is free software: you can redistribute it and/or modify
+ *  ApexStudio is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
- *  AndroidIDE is distributed in the hope that it will be useful,
+ *  ApexStudio is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *   along with AndroidIDE.  If not, see <https://www.gnu.org/licenses/>.
+ *   along with ApexStudio.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package dev.apexstudio.ide.fragments.onboarding
 
 import android.annotation.SuppressLint
@@ -37,41 +36,61 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
+import com.blankj.utilcode.util.ResourceUtils
 import com.github.appintro.SlidePolicy
+import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.termux.app.TermuxInstaller
 import dev.apexstudio.ide.R
-import dev.apexstudio.ide.databinding.LayoutOnboardngSetupConfigBinding
-import dev.apexstudio.ide.models.IdeSetupArgument
+import dev.apexstudio.ide.databinding.LayoutIdeSdkManagerBinding
 import dev.apexstudio.ide.resources.R.string
-import dev.apexstudio.ide.tasks.runOnUiThread
 import dev.apexstudio.ide.utils.ConnectionInfo
 import dev.apexstudio.ide.utils.Environment
 import dev.apexstudio.ide.utils.flashError
 import dev.apexstudio.ide.utils.getConnectionInfo
+import org.json.JSONObject
+import java.io.File
 
 /**
+ * SDK manager slide of the onboarding flow.
+ *
+ * Lets the user pick which JDK, Android platforms, build-tools, NDK and CMake
+ * versions to install (multi-version capable, driven by the bundled
+ * `data/common/toolchain-manifest.json` catalog). The selection is applied by
+ * `install-toolchain.sh` when the user presses `Done`.
+ *
  * @author Akash Yadav
  */
 class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
 
-  private var _content: LayoutOnboardngSetupConfigBinding? = null
-  private val content: LayoutOnboardngSetupConfigBinding
+  private var _content: LayoutIdeSdkManagerBinding? = null
+  private val content: LayoutIdeSdkManagerBinding
     get() = checkNotNull(_content) { "Fragment has been destroyed" }
 
   private var backgroundDataRestrictionReceiver: BroadcastReceiver? = null
   private var networkStateChangeCallback: NetworkCallback? = null
 
+  private val selectedPlatforms = LinkedHashSet<String>()
+  private val selectedBuildTools = LinkedHashSet<String>()
+  private val selectedNdkVersions = LinkedHashSet<String>()
+  private val selectedCmakeVersions = LinkedHashSet<String>()
+
+  @Volatile
+  private var installingToolchain = false
+
+  val isInstalling: Boolean
+    get() = installingToolchain
+
   companion object {
 
     @JvmStatic
     fun newInstance(context: Context): IdeSetupConfigurationFragment {
-      return IdeSetupConfigurationFragment().also {
-        it.arguments = Bundle().apply {
-          putCharSequence(KEY_ONBOARDING_TITLE, context.getString(R.string.title_install_tools))
+      return IdeSetupConfigurationFragment().apply {
+        arguments = Bundle().apply {
+          putCharSequence(KEY_ONBOARDING_TITLE,
+            context.getString(R.string.title_install_tools_apex))
           putCharSequence(KEY_ONBOARDING_SUBTITLE,
-            context.getString(R.string.subtitle_install_tools))
-          putCharSequence(KEY_ONBOARDING_EXTRA_INFO,
-            Html.fromHtml(context.getString(R.string.msg_install_tools),
-              Html.FROM_HTML_MODE_COMPACT))
+            context.getString(R.string.subtitle_install_tools_apex))
         }
       }
     }
@@ -79,7 +98,7 @@ class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
 
   @SuppressLint("PrivateResource")
   override fun createContentView(parent: ViewGroup, attachToParent: Boolean) {
-    _content = LayoutOnboardngSetupConfigBinding.inflate(layoutInflater, parent, attachToParent)
+    _content = LayoutIdeSdkManagerBinding.inflate(layoutInflater, parent, attachToParent)
 
     content.apply {
       noConnection.root.setText(R.string.msg_no_internet)
@@ -87,63 +106,246 @@ class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
       meteredConnection.root.setText(R.string.msg_connected_to_metered_connection)
       backgroundDataRestricted.root.setText(R.string.msg_disable_background_data_restriction)
 
-      autoInstallSwitch.setOnCheckedChangeListener { button, isChecked ->
-        button.setText(
-          if (isChecked) R.string.action_auto_install else R.string.action_manual_install)
-        sdkVersionLayout.isEnabled = isChecked
-        jdkVersionLayout.isEnabled = isChecked
-        installGit.isEnabled = isChecked
-//        installOpenssh.isEnabled = isChecked
-      }
+      val manifest = readToolchainManifest()
 
-      val sdkVersions = SdkVersion.entries.map { "SDK ${it.version}" }.reversed()
-      sdkVersion.setText(sdkVersions[0])
-      sdkVersion.setAdapter(ArrayAdapter(
-        requireContext(),
-        com.google.android.material.R.layout.m3_auto_complete_simple_item,
-        sdkVersions)
-      )
-
-      val jdkVersions = JdkVersion.entries.map { "JDK ${it.version}" }
-      jdkVersion.setText(jdkVersions[0])
+      val jdks = manifest.getJSONArray("jdk").toStringList()
+      val jdkDisplayNames = jdks.map { "JDK $it" }
+      val defaultJdk = jdks.firstOrNull { it == "21" } ?: jdks.firstOrNull().orEmpty()
+      jdkVersion.setText(
+        jdkDisplayNames.firstOrNull { it == "JDK $defaultJdk" } ?: jdkDisplayNames.firstOrNull())
       jdkVersion.setAdapter(ArrayAdapter(
         requireContext(),
         com.google.android.material.R.layout.m3_auto_complete_simple_item,
-        jdkVersions)
+        jdkDisplayNames)
       )
+
+      val platformValues = manifest.getJSONArray("platforms").toStringList()
+      selectedPlatforms += platformValues.firstOrNull() ?: ""
+      populateCheckboxList(llPlatforms, platformValues.map { "API $it" to it },
+        selectedPlatforms)
+
+      val buildTools = manifest.getJSONArray("build_tools").toStringList()
+      selectedBuildTools += buildTools.firstOrNull() ?: ""
+      populateCheckboxList(llBuildTools, buildTools.map { "Build-tools $it" to it },
+        selectedBuildTools)
+
+      val ndks = manifest.getJSONArray("ndk").toObjectList().map {
+        it.getString("display") to it.getString("version")
+      }
+      populateCheckboxList(llNdk, ndks, selectedNdkVersions)
+
+      val cmakes = manifest.getJSONArray("cmake").toObjectList().map {
+        it.getString("display") to it.getString("version")
+      }
+      populateCheckboxList(llCmake, cmakes, selectedCmakeVersions)
     }
 
     updateConnectionStatus()
   }
 
-  fun isAutoInstall(): Boolean = content.autoInstallSwitch.isChecked
-
-  fun buildIdeSetupArguments(): Array<String> {
-    val args = mutableListOf<String>()
-    args.setArgument(IdeSetupArgument.INSTALL_DIR, Environment.HOME.absolutePath)
-    args.setArgument(IdeSetupArgument.SDK_VERSION,
-      SdkVersion.fromDisplayName(content.sdkVersion.text).version)
-    args.setArgument(IdeSetupArgument.JDK_VERSION,
-      JdkVersion.fromDisplayName(content.jdkVersion.text).version)
-    args.setArgument(IdeSetupArgument.ASSUME_YES)
-    if (content.installGit.isChecked) {
-      args.setArgument(IdeSetupArgument.WITH_GIT)
+  fun needsInstall(): Boolean {
+    if (installingToolchain) {
+      return false
     }
-    if (content.installOpenssh.isChecked) {
-      args.setArgument(IdeSetupArgument.WITH_OPENSSH)
+
+    val ideEnvFile = File(File(Environment.PREFIX, "etc"), "ide-environment.properties")
+    if (!ideEnvFile.isFile) {
+      return true
+    }
+
+    if (selectedPlatforms.any { !platformInstalled(it) }) {
+      return true
+    }
+
+    if (selectedBuildTools.any { !buildToolsInstalled(it) }) {
+      return true
+    }
+
+    if (selectedNdkVersions.any { !File(Environment.ANDROID_HOME, "ndk/$it").exists() }) {
+      return true
+    }
+
+    if (selectedCmakeVersions.any {
+        !File(Environment.ANDROID_HOME, "cmake/$it").isDirectory
+      }) {
+      return true
+    }
+
+    return false
+  }
+
+  fun installToolchain(onComplete: () -> Unit) {
+    if (installingToolchain) {
+      return
+    }
+
+    if (!TermuxInstaller.isBootstrapInstalled()) {
+      flashError(R.string.msg_setup_bootstrap_wait)
+      return
+    }
+
+    installingToolchain = true
+    content.tvInstallStatus.text = getString(R.string.msg_sdk_manager_installing)
+    content.tvInstallStatus.isVisible = true
+    setUiEnabled(false)
+
+    Thread {
+      try {
+        val scriptDir = File(Environment.PREFIX, "etc/apexstudio")
+        scriptDir.mkdirs()
+        val script = File(scriptDir, "install-toolchain.sh")
+        val manifest = File(scriptDir, "toolchain-manifest.json")
+        val scriptOk = ResourceUtils.copyFileFromAssets(
+          "data/common/install-toolchain.sh", script.absolutePath)
+        val manifestOk = ResourceUtils.copyFileFromAssets(
+          "data/common/toolchain-manifest.json", manifest.absolutePath)
+        if (!scriptOk || !manifestOk) {
+          throw IllegalStateException("asset copy failed (script=$scriptOk, manifest=$manifestOk)")
+        }
+        script.setExecutable(true)
+
+        val args = buildToolchainArgs()
+
+        val env = HashMap<String, String>()
+        Environment.putEnvironment(env, false)
+        env["PREFIX"] = Environment.PREFIX.absolutePath
+        env["TMPDIR"] = Environment.TMP_DIR.absolutePath
+        env["PATH"] = Environment.BIN_DIR.absolutePath + ":" + System.getenv("PATH")
+
+        val process = ProcessBuilder(
+          Environment.BASH_SHELL.absolutePath,
+          script.absolutePath,
+          *args
+        ).redirectErrorStream(true)
+          .apply { environment().putAll(env) }
+          .start()
+
+        process.inputStream.bufferedReader().forEachLine { line ->
+          requireActivity().runOnUiThread {
+            if (isAdded) {
+              appendInstallLine(line)
+            }
+          }
+        }
+        val code = process.waitFor()
+        requireActivity().runOnUiThread {
+          if (code == 0) {
+            onComplete()
+          } else {
+            appendInstallLine(getString(R.string.msg_setup_toolchain_failed, code))
+          }
+        }
+      } catch (e: Exception) {
+        requireActivity().runOnUiThread {
+          if (isAdded) {
+            appendInstallLine(getString(R.string.msg_setup_toolchain_error, e.message))
+          }
+        }
+      } finally {
+        requireActivity().runOnUiThread {
+          if (isAdded) {
+            installingToolchain = false
+            setUiEnabled(true)
+          } else {
+            installingToolchain = false
+          }
+        }
+      }
+    }.apply {
+      isDaemon = true
+      start()
+    }
+  }
+
+  private fun buildToolchainArgs(): Array<String> {
+    val args = mutableListOf<String>()
+    val jdk = content.jdkVersion.text?.toString()
+      ?.removePrefix("JDK ")
+      ?.replace(" ", "")
+      ?: "21"
+    args += listOf("--jdk", jdk)
+    selectedPlatforms.filter { it.isNotBlank() }.forEach {
+      args += listOf("--platform", it)
+    }
+    selectedBuildTools.filter { it.isNotBlank() }.forEach {
+      args += listOf("--build-tools", it)
+    }
+    selectedNdkVersions.filter { it.isNotBlank() }.forEach {
+      args += listOf("--ndk", it)
+    }
+    selectedCmakeVersions.filter { it.isNotBlank() }.forEach {
+      args += listOf("--cmake", it)
     }
     return args.toTypedArray()
   }
 
-  private fun MutableList<String>.setArgument(argument: IdeSetupArgument, value: Any? = null) {
-    val strVal = value?.toString() ?: ""
-    if (argument.requiresValue && strVal.isBlank()) {
-      throw IllegalArgumentException("${argument.name} requires a value")
+  private fun populateCheckboxList(
+    container: ViewGroup,
+    items: List<Pair<String, String>>,
+    selected: MutableSet<String>
+  ) {
+    container.removeAllViews()
+    items.forEach { (label, value) ->
+      val checkBox = MaterialCheckBox(requireContext())
+      checkBox.text = label
+      checkBox.isChecked = selected.contains(value)
+      checkBox.minHeight = 0
+      checkBox.setOnCheckedChangeListener { _, isChecked ->
+        if (isChecked) {
+          selected += value
+        } else {
+          selected -= value
+        }
+      }
+      container.addView(checkBox)
     }
-
-    add(argument.argumentName)
-    add(strVal)
   }
+
+  private fun platformInstalled(api: String): Boolean =
+    File(Environment.ANDROID_HOME, "platforms/android-$api").isDirectory
+
+  private fun buildToolsInstalled(version: String): Boolean =
+    File(Environment.ANDROID_HOME, "build-tools/$version").isDirectory
+
+  private fun setUiEnabled(enabled: Boolean) {
+    content.jdkVersionLayout.isEnabled = enabled
+    content.llPlatforms.forEachEnabled(enabled)
+    content.llBuildTools.forEachEnabled(enabled)
+    content.llNdk.forEachEnabled(enabled)
+    content.llCmake.forEachEnabled(enabled)
+  }
+
+  private fun ViewGroup.forEachEnabled(enabled: Boolean) {
+    for (i in 0 until childCount) {
+      getChildAt(i).isEnabled = enabled
+    }
+  }
+
+  private fun appendInstallLine(line: String) {
+    val currentText = content.tvInstallStatus.text?.toString().orEmpty()
+    content.tvInstallStatus.text =
+      currentText + if (currentText.endsWith("\n") || currentText.isEmpty()) {
+        line
+      } else {
+        "\n$line"
+      }
+  }
+
+  private fun readToolchainManifest(): JSONObject {
+    val reader = requireContext().assets.open("data/common/toolchain-manifest.json")
+      .bufferedReader()
+    return try {
+      JSONObject(reader.readText())
+    } finally {
+      reader.close()
+    }
+  }
+
+  private fun org.json.JSONArray.toStringList(): List<String> =
+    (0 until length()).map { getString(it) }
+
+  private fun org.json.JSONArray.toObjectList(): List<JSONObject> =
+    (0 until length()).map { getJSONObject(it) }
 
   override fun onStart() {
     super.onStart()
@@ -159,7 +361,7 @@ class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
   private fun updateConnectionStatus(networkCapabilities: NetworkCapabilities? = null) =
     updateConnectionStatus(getConnectionInfo(requireContext(), networkCapabilities))
 
-  private fun updateConnectionStatus(connectionInfo: ConnectionInfo) = runOnUiThread {
+  private fun updateConnectionStatus(connectionInfo: ConnectionInfo) {
     content.noConnection.root.isVisible = false
     content.cellularConnection.root.isVisible = false
     content.meteredConnection.root.isVisible = false
@@ -167,7 +369,7 @@ class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
 
     if (connectionInfo === ConnectionInfo.UNKNOWN || !connectionInfo.isConnected) {
       showNoConnectionWarning()
-      return@runOnUiThread
+      return
     }
 
     if (connectionInfo.isCellularTransport) {
@@ -223,6 +425,7 @@ class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
     super.onDestroyView()
     backgroundDataRestrictionReceiver = null
     networkStateChangeCallback = null
+    _content = null
   }
 
   override val isPolicyRespected: Boolean
@@ -263,7 +466,7 @@ class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
     backgroundDataRestrictionReceiver?.also {
       try {
         requireContext().unregisterReceiver(it)
-      } catch (err: Throwable) { /*ignored*/
+      } catch (err: Throwable) { /* ignored */
       }
     }
 

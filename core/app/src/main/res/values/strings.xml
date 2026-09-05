@@ -29,4 +29,23 @@
   <string name="status_setup_installing">Installing bootstrap packages...</string>
   <string name="status_setup_done">Setup complete</string>
   <string name="action_continue">Continue</string>
+
+  <!--  Onboarding bootstrap slide-->
+  <string name="title_setup_bootstrap">Bootstrap</string>
+  <string name="subtitle_setup_bootstrap">Installing the base environment (Termux packages). This may take a few minutes.</string>
+  <string name="msg_setup_bootstrap_installing">Installing bootstrap packages...</string>
+  <string name="msg_setup_bootstrap_installed">Bootstrap installed</string>
+  <string name="msg_setup_bootstrap_wait">Please wait for the bootstrap installation to finish.</string>
+
+  <!--  Onboarding SDK manager slide-->
+  <string name="title_install_tools_apex">SDK Manager</string>
+  <string name="subtitle_install_tools_apex">Choose the toolchain components to install. Selections are installed when you press Done.</string>
+  <string name="label_jdk">JDK version</string>
+  <string name="label_platforms">Android platforms</string>
+  <string name="label_build_tools">Build-tools</string>
+  <string name="label_ndk">NDK</string>
+  <string name="label_cmake">CMake</string>
+  <string name="msg_sdk_manager_installing">Installing the selected components... This may take a while.</string>
+  <string name="msg_setup_toolchain_failed">Toolchain install failed (exit code %1$d). Retry when ready; Continue stays disabled until it succeeds.</string>
+  <string name="msg_setup_toolchain_error">Unexpected error: %1$s</string>
 </resources>
