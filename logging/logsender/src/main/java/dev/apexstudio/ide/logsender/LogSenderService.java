@@ -25,7 +25,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Build.VERSION;
@@ -61,12 +60,7 @@ public class LogSenderService extends Service {
     Logger.debug("[LogSenderService] onCreate()");
     super.onCreate();
     setupNotificationChannel();
-    // Foreground services must declare a type for targetSdk 34+ (Android 14+).
-    if (VERSION.SDK_INT >= VERSION_CODES.Q) {
-      startForeground(NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
-    } else {
-      startForeground(NOTIFICATION_ID, buildNotification());
-    }
+    startForeground(NOTIFICATION_ID, buildNotification());
   }
 
   @Override

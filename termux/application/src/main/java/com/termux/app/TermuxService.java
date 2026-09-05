@@ -5,7 +5,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.pm.ServiceInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -211,14 +210,7 @@ public final class TermuxService extends Service implements AppShell.AppShellCli
     /** Make service run in foreground mode. */
     private void runStartForeground() {
         setupNotificationChannel();
-        // On Android 10+ a foreground service type is required to start in foreground.
-        // Use SPECIAL_USE since this service runs the terminal and build sessions.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(TermuxConstants.TERMUX_APP_NOTIFICATION_ID, buildNotification(),
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
-        } else {
-            startForeground(TermuxConstants.TERMUX_APP_NOTIFICATION_ID, buildNotification());
-        }
+        startForeground(TermuxConstants.TERMUX_APP_NOTIFICATION_ID, buildNotification());
     }
 
     /** Make service leave foreground mode. */
