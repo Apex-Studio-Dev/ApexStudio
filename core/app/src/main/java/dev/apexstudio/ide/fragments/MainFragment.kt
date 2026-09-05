@@ -78,12 +78,15 @@ class MainFragment : BaseFragment() {
 
         if (action.id == MainScreenAction.ACTION_OPEN_TERMINAL) {
           action.onLongClick = { _: MainScreenAction, _: View ->
-            if (!requireSetup()) return@onLongClick false
-            val intent = Intent(requireActivity(), TerminalActivity::class.java).apply {
-              putExtra(TERMUX_ACTIVITY.EXTRA_FAILSAFE_SESSION, true)
+            if (requireSetup()) {
+              val intent = Intent(requireActivity(), TerminalActivity::class.java).apply {
+                putExtra(TERMUX_ACTIVITY.EXTRA_FAILSAFE_SESSION, true)
+              }
+              startActivity(intent)
+              true
+            } else {
+              false
             }
-            startActivity(intent)
-            true
           }
         }
       }
