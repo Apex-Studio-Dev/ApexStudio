@@ -76,7 +76,12 @@
     <!-- Version >= 3.0. DeX Dual Mode support -->
     <service
       android:exported="false"
-      android:name=".app.TermuxService" />
+      android:name=".app.TermuxService"
+      android:foregroundServiceType="specialUse">
+      <property
+        android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+        android:value="Runs the AndroidIDE terminal and build environment sessions" />
+    </service>
 
   </application>
 
