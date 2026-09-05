@@ -19,18 +19,16 @@ package dev.apexstudio.ide.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.github.appintro.AppIntro2
 import com.github.appintro.AppIntroPageTransformerType
+import com.termux.app.TermuxInstaller
 import dev.apexstudio.ide.R
 import dev.apexstudio.ide.R.string
 import dev.apexstudio.ide.app.configuration.IDEBuildConfigProvider
 import dev.apexstudio.ide.app.configuration.IJdkDistributionProvider
 import dev.apexstudio.ide.fragments.onboarding.GreetingFragment
-import dev.apexstudio.ide.fragments.onboarding.IdeSetupConfigurationFragment
 import dev.apexstudio.ide.fragments.onboarding.OnboardingInfoFragment
 import dev.apexstudio.ide.fragments.onboarding.PermissionsFragment
 import dev.apexstudio.ide.fragments.onboarding.StatisticsFragment
@@ -51,16 +49,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 
 class OnboardingActivity : AppIntro2() {
-
-  private val terminalActivityCallback = registerForActivityResult(
-    ActivityResultContracts.StartActivityForResult()) {
-    Log.d(TAG, "TerminalActivity: resultCode=${it.resultCode}")
-    if (!isFinishing) {
-      reloadJdkDistInfo {
-        tryNavigateToMainIfSetupIsCompleted()
-      }
-    }
-  }
 
   private val activityScope =
     CoroutineScope(Dispatchers.Main + CoroutineName("OnboardingActivity"))
@@ -127,10 +115,6 @@ class OnboardingActivity : AppIntro2() {
     if (!PermissionsFragment.areAllPermissionsGranted(this)) {
       addSlide(PermissionsFragment.newInstance(this))
     }
-
-    if (!checkToolsIsInstalled()) {
-      addSlide(IdeSetupConfigurationFragment.newInstance(this))
-    }
   }
 
   override fun onResume() {
@@ -157,14 +141,8 @@ class OnboardingActivity : AppIntro2() {
       return
     }
 
-    if (!checkToolsIsInstalled() && currentFragment is IdeSetupConfigurationFragment) {
-      val intent = Intent(this, TerminalActivity::class.java)
-      if (currentFragment.isAutoInstall()) {
-        intent.putExtra(TerminalActivity.EXTRA_ONBOARDING_RUN_IDESETUP, true)
-        intent.putExtra(TerminalActivity.EXTRA_ONBOARDING_RUN_IDESETUP_ARGS,
-          currentFragment.buildIdeSetupArguments())
-      }
-      terminalActivityCallback.launch(intent)
+    if (!TermuxInstaller.isBootstrapInstalled()) {
+      startActivity(Intent(this, SetupActivity::class.java))
       return
     }
 

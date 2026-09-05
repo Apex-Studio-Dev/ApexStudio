@@ -27,7 +27,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import dev.apexstudio.ide.terminal.ComposesetupSession
 import dev.apexstudio.ide.terminal.IdeTerminalSessionClient
-import dev.apexstudio.ide.terminal.IdesetupSession
 import dev.apexstudio.ide.utils.Environment
 import dev.apexstudio.ide.utils.flashError
 import com.termux.R
@@ -57,9 +56,6 @@ class TerminalActivity : TermuxActivity() {
     private val log = LoggerFactory.getLogger(TerminalActivity::class.java)
     private const val KEY_TERMINAL_CAN_ADD_SESSIONS = "ide.terminal.sessions.canAddSessions"
 
-    const val EXTRA_ONBOARDING_RUN_IDESETUP = "ide.onboarding.terminal.runIdesetup"
-    const val EXTRA_ONBOARDING_RUN_IDESETUP_ARGS = "ide.onboarding.terminal.runIdesetup.args"
-    
     const val EXTRA_ONBOARDING_RUN_COMPOSESETUP = "ide.onboarding.terminal.runcomposesetup"
     const val EXTRA_ONBOARDING_RUN_COMPOSESETUP_ARGS = "ide.onboarding.terminal.composesetup.args"
   }
@@ -109,13 +105,6 @@ class TerminalActivity : TermuxActivity() {
     launchFailsafe: Boolean
   ) {
     if (intent != null) {
-      val runIdesetup = intent.getBooleanExtra(EXTRA_ONBOARDING_RUN_IDESETUP, false)
-      val runIdesetupArgs = intent.getStringArrayExtra(EXTRA_ONBOARDING_RUN_IDESETUP_ARGS)
-      if (runIdesetup && !runIdesetupArgs.isNullOrEmpty()) {
-        addIdesetupSession(runIdesetupArgs)
-        return
-      }
-      
       val runComposesetup = intent.getBooleanExtra(EXTRA_ONBOARDING_RUN_COMPOSESETUP, false)
       val runComposesetupArgs = intent.getStringArrayExtra(EXTRA_ONBOARDING_RUN_COMPOSESETUP_ARGS)
       if (runComposesetup && !runComposesetupArgs.isNullOrEmpty()) {
@@ -133,32 +122,6 @@ class TerminalActivity : TermuxActivity() {
     )
   }
 
-  private fun addIdesetupSession(args: Array<String>) {
-    val script = IdesetupSession.createScript(this) ?: run {
-      log.error("Failed to add idesetup session. Cannot create script.")
-      flashError(R.string.msg_cannot_create_terminal_session)
-      return
-    }
-
-    Log.d("IdeSetupConfig", "buildIdeSetupArguments: ${args.joinToString(separator = " ")}")
-
-    val session = IdesetupSession.wrap(termuxService.createTermuxSession(
-      /* executablePath = */ script.absolutePath,
-      /* arguments = */ args,
-      /* stdin = */ null,
-      /* workingDirectory = */ Environment.HOME.absolutePath,
-      /* isFailSafe = */ false,
-      /* sessionName = */ "IDE setup"
-    ), script)
-
-    session ?: run {
-      flashError(R.string.msg_cannot_create_terminal_session)
-      return
-    }
-
-    termuxTerminalSessionClient.setCurrentSession(session.terminalSession)
-  }
-  
   private fun addComposesetupSession(args: Array<String>) {
     val script = ComposesetupSession.createScript(this) ?: run {
       log.error("Failed to add composesetup session. Cannot create script.")

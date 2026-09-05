@@ -74,6 +74,9 @@
       android:exported="false"
       android:launchMode="singleTop"
       android:name=".activities.editor.EditorActivityKt"/>
+    <activity
+      android:exported="false"
+      android:name=".activities.SetupActivity" />
     <activity android:exported="false" android:name=".activities.PreferencesActivity" />
     <activity android:exported="false" android:name=".activities.AboutActivity" />
     <activity android:exported="false" android:name=".activities.ContributorsActivity" />

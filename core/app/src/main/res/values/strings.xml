@@ -19,6 +19,14 @@
   <!--  Required by F-Droid-->
   <string name="app_name" translatable="false">ApexStudio</string>
   <string name="title_setup_not_completed">Setup not completed</string>
-  <string name="msg_setup_not_completed">Install JDK and the Android SDK to build projects on this device.</string>
+  <string name="msg_setup_not_completed">Set up the environment to build and run projects on this device.</string>
   <string name="action_setup">Setup</string>
+
+  <!--  Setup screen-->
+  <string name="title_setup">Setup</string>
+  <string name="subtitle_setup">Installing the environment. This may take a few minutes.</string>
+  <string name="label_setup_terminal">bootstrap</string>
+  <string name="status_setup_installing">Installing bootstrap packages...</string>
+  <string name="status_setup_done">Setup complete</string>
+  <string name="action_continue">Continue</string>
 </resources>

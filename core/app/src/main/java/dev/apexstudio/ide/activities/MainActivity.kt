@@ -30,18 +30,13 @@ import androidx.transition.doOnEnd
 import com.google.android.material.transition.MaterialSharedAxis
 import dev.apexstudio.ide.activities.editor.EditorActivityKt
 import dev.apexstudio.ide.app.EdgeToEdgeIDEActivity
-import dev.apexstudio.ide.app.configuration.IJdkDistributionProvider
 import dev.apexstudio.ide.databinding.ActivityMainBinding
-import dev.apexstudio.ide.fragments.onboarding.JdkVersion
-import dev.apexstudio.ide.fragments.onboarding.SdkVersion
-import dev.apexstudio.ide.models.IdeSetupArgument
 import dev.apexstudio.ide.preferences.internal.GeneralPreferences
 import dev.apexstudio.ide.projects.ProjectManagerImpl
 import dev.apexstudio.ide.resources.R.string
 import dev.apexstudio.ide.roomData.recentproject.RecentProject
 import dev.apexstudio.ide.templates.ITemplateProvider
 import dev.apexstudio.ide.utils.DialogUtils
-import dev.apexstudio.ide.utils.Environment
 import dev.apexstudio.ide.utils.flashInfo
 import dev.apexstudio.ide.utils.getCreatedTime
 import dev.apexstudio.ide.utils.getLastModifiedTime
@@ -53,8 +48,10 @@ import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_MAIN
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_SAVED_PROJECTS
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_TEMPLATE_DETAILS
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_TEMPLATE_LIST
+import com.termux.app.TermuxInstaller
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 
@@ -123,33 +120,15 @@ class MainActivity : EdgeToEdgeIDEActivity() {
 
     private fun refreshSetupBanner() {
         lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                IJdkDistributionProvider.getInstance().loadDistributions()
+            val installed = withContext(Dispatchers.IO) {
+                TermuxInstaller.isBootstrapInstalled()
             }
-            binding.setupBanner.isVisible = !checkToolsInstalled()
+            binding.setupBanner.isVisible = !installed
         }
-    }
-
-    private fun checkToolsInstalled(): Boolean {
-        return IJdkDistributionProvider.getInstance().installedDistributions.isNotEmpty()
-            && Environment.ANDROID_HOME.exists()
     }
 
     private fun launchIdeSetup() {
-        val args = arrayOf(
-            IdeSetupArgument.INSTALL_DIR.argumentName,
-            Environment.HOME.absolutePath,
-            IdeSetupArgument.SDK_VERSION.argumentName,
-            SdkVersion.SDK_37_0_0.version,
-            IdeSetupArgument.JDK_VERSION.argumentName,
-            JdkVersion.JDK_21.version,
-            IdeSetupArgument.ASSUME_YES.argumentName
-        )
-        val intent = Intent(this, TerminalActivity::class.java).apply {
-            putExtra(TerminalActivity.EXTRA_ONBOARDING_RUN_IDESETUP, true)
-            putExtra(TerminalActivity.EXTRA_ONBOARDING_RUN_IDESETUP_ARGS, args)
-        }
-        startActivity(intent)
+        startActivity(Intent(this, SetupActivity::class.java))
     }
 
     override fun onApplySystemBarInsets(insets: Insets) {
