@@ -40,7 +40,6 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
-import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
 
 public class ToolsManager {
@@ -62,7 +61,7 @@ public class ToolsManager {
 
       writeNoMediaFile();
       extractAndroidIdeGradlePlugin();
-      extractAapt2();
+      setupAapt2();
       extractToolingApi();
       extractAndroidJar();
       extractColorScheme(app);
@@ -202,16 +201,11 @@ public class ToolsManager {
     return COMMON_ASSET_DATA_DIR + "/" + name;
   }
 
-  private static void extractAapt2() {
+  private static void setupAapt2() {
     if (!Environment.AAPT2.exists()) {
-      final var context = BaseApplication.getBaseInstance();
-      final var nativeLibraryDir = context.getApplicationInfo().nativeLibraryDir;
-      final var sourceAapt2 = new File(nativeLibraryDir, "libaapt2.so");
-      if (sourceAapt2.exists() && sourceAapt2.isFile()) {
-        FilesKt.copyTo(sourceAapt2, Environment.AAPT2, true, ConstantsKt.DEFAULT_BUFFER_SIZE);
-      } else {
-        LOG.error("{} file does not exist! This can be problematic.", sourceAapt2);
-      }
+      LOG.error("AAPT2 binary not found at {}. Install it with `apt update && apt install aapt2`.",
+              Environment.AAPT2);
+      return;
     }
 
     if (!Environment.AAPT2.canExecute() && !Environment.AAPT2.setExecutable(true)) {

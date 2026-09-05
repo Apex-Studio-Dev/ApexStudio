@@ -25,7 +25,6 @@ import dev.apexstudio.ide.plugins.tasks.AddAndroidJarToAssetsTask
 import dev.apexstudio.ide.plugins.tasks.AddFileToAssetsTask
 import dev.apexstudio.ide.plugins.tasks.GenerateInitScriptTask
 import dev.apexstudio.ide.plugins.tasks.GradleWrapperGeneratorTask
-import dev.apexstudio.ide.plugins.tasks.SetupAapt2Task
 import dev.apexstudio.ide.plugins.util.SdkUtils.getAndroidJar
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -54,9 +53,6 @@ class AndroidIDEAssetsPlugin : Plugin<Project> {
                 ApplicationAndroidComponentsExtension::class.java
             )
 
-            val setupAapt2TaskTaskProvider =
-                tasks.register("setupAapt2", SetupAapt2Task::class.java)
-
             val addAndroidJarTaskProvider = tasks.register(
                 "addAndroidJarToAssets",
                 AddAndroidJarToAssetsTask::class.java
@@ -67,11 +63,6 @@ class AndroidIDEAssetsPlugin : Plugin<Project> {
             androidComponentsExtension.onVariants { variant ->
 
                 val variantNameCapitalized = variant.name.capitalized()
-
-                variant.sources.jniLibs?.addGeneratedSourceDirectory(
-                    setupAapt2TaskTaskProvider,
-                    SetupAapt2Task::outputDirectory
-                )
 
                 variant.sources.assets?.addGeneratedSourceDirectory(
                     wrapperGeneratorTaskProvider,
