@@ -54,9 +54,9 @@
       android:clickable="true"
       android:focusable="true"
       android:visibility="gone"
-      app:cardBackgroundColor="?attr/colorSurfaceContainerHighest"
-      app:cardCornerRadius="16dp"
-      app:elevation="6dp"
+      app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+      app:cardCornerRadius="20dp"
+      app:cardElevation="0dp"
       tools:visibility="visible">
 
       <LinearLayout
@@ -66,12 +66,15 @@
         android:orientation="horizontal"
         android:padding="16dp">
 
-        <ImageView
-          android:layout_width="28dp"
-          android:layout_height="28dp"
-          android:layout_gravity="center_vertical"
+        <com.google.android.material.imageview.ShapeableImageView
+          android:layout_width="40dp"
+          android:layout_height="40dp"
           android:contentDescription="@null"
-          android:src="@drawable/ic_alert" />
+          android:scaleType="centerInside"
+          android:src="@drawable/ic_alert"
+          app:backgroundTint="?attr/colorTertiaryContainer"
+          app:shapeAppearanceOverlay="@style/AppTheme.ShapeAppearance.Circle"
+          app:tint="?attr/colorOnTertiaryContainer" />
 
         <LinearLayout
           android:layout_width="0dp"
