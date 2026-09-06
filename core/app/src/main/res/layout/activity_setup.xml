@@ -61,7 +61,7 @@
                     android:id="@+id/terminal_spinner"
                     android:layout_width="16dp"
                     android:layout_height="16dp"
-                    app:indeterminate="true"
+                    android:indeterminate="true"
                     app:indicatorColor="#80FFFFFF"
                     app:indicatorSize="16dp"
                     app:trackThickness="1.5dp" />
@@ -76,9 +76,9 @@
                 android:id="@+id/terminal_progress"
                 android:layout_width="match_parent"
                 android:layout_height="3dp"
-                app:indeterminate="true"
+                android:indeterminate="true"
                 app:indicatorColor="?attr/colorPrimary"
-                app:showTrack="false"
+                app:trackColor="@android:color/transparent"
                 app:trackCornerRadius="2dp" />
 
             <ScrollView
