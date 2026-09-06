@@ -62,7 +62,6 @@ import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_TEMPLATE_LIST
 import com.termux.app.TermuxInstaller
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 
@@ -75,7 +74,6 @@ class MainActivity : EdgeToEdgeIDEActivity() {
     private var lastNeedsInstall = true
     private var settingsFragmentAdded = false
     private var aboutFragmentAdded = false
-    private var syncingRail = false
 
     private val onBackPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -83,6 +81,13 @@ class MainActivity : EdgeToEdgeIDEActivity() {
 
                 // Ignore back press if project creating is in progress
                 if (creatingProject.value == true) {
+                    return@apply
+                }
+
+                // If a settings sub-page (e.g. "General") is open, pop it first
+                // so back returns to the settings root instead of leaving the panel.
+                if (currentScreen.value == SCREEN_SETTINGS && supportFragmentManager.backStackEntryCount > 0) {
+                    supportFragmentManager.popBackStack()
                     return@apply
                 }
 
@@ -101,6 +106,7 @@ class MainActivity : EdgeToEdgeIDEActivity() {
                 }
 
                 if (currentScreen.value != newScreen) {
+                    updateSidebarSelection(newScreen)
                     setScreen(newScreen)
                 }
             }
@@ -134,44 +140,45 @@ class MainActivity : EdgeToEdgeIDEActivity() {
 
         onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
 
-        val onClick = { _: View ->
-            if (!TermuxInstaller.isBootstrapInstalled()) {
-                launchIdeSetup()
-            } else {
-                launchSdkManager()
-            }
-        }
-        binding.setupBanner.setOnClickListener(onClick)
-        binding.btnSetupNow.setOnClickListener(onClick)
-
         setupSidebar()
         setupSdkInstallButton()
     }
 
     private fun setupSidebar() {
-        binding.navRail.setOnItemSelectedListener { item ->
-            if (syncingRail) {
-                return@setOnItemSelectedListener false
+        binding.navProject.setOnClickListener {
+            if (viewModel.currentScreen.value != SCREEN_MAIN) {
+                viewModel.setScreen(SCREEN_MAIN)
             }
-            when (item.itemId) {
-                R.id.nav_project -> if (viewModel.currentScreen.value != SCREEN_MAIN) {
-                    viewModel.setScreen(SCREEN_MAIN)
-                }
+        }
+        binding.navSdk.setOnClickListener {
+            viewModel.setScreen(SCREEN_SDK_MANAGER)
+        }
+        binding.navSettings.setOnClickListener {
+            clearSettingsBackStack()
+            viewModel.setScreen(SCREEN_SETTINGS)
+        }
+        binding.navAbout.setOnClickListener {
+            viewModel.setScreen(SCREEN_ABOUT)
+        }
+    }
 
-                R.id.nav_sdk -> viewModel.setScreen(SCREEN_SDK_MANAGER)
-                R.id.nav_settings -> viewModel.setScreen(SCREEN_SETTINGS)
-                R.id.nav_about -> {
-                    if (!aboutFragmentAdded) {
-                        embedAboutPanel()
-                    }
-                    viewModel.setScreen(SCREEN_ABOUT)
-                }
+    private fun clearSettingsBackStack() {
+        val fragmentManager = supportFragmentManager
+        while (fragmentManager.backStackEntryCount > 0) {
+            fragmentManager.popBackStack()
+        }
+    }
 
-                R.id.nav_terminal -> if (requireBootstrapSetup()) {
-                    startActivity(Intent(this, TerminalActivity::class.java))
-                }
-            }
-            true
+    private fun updateSidebarSelection(screen: Int?) {
+        val selectedId = when (screen) {
+            SCREEN_MAIN -> R.id.nav_project
+            SCREEN_SDK_MANAGER -> R.id.nav_sdk
+            SCREEN_SETTINGS -> R.id.nav_settings
+            SCREEN_ABOUT -> R.id.nav_about
+            else -> R.id.nav_project
+        }
+        for (item in arrayOf(binding.navProject, binding.navSdk, binding.navSettings, binding.navAbout)) {
+            item.isActivated = item.id == selectedId
         }
     }
 
@@ -262,41 +269,11 @@ class MainActivity : EdgeToEdgeIDEActivity() {
             .commit()
     }
 
-    override fun onResume() {
-        super.onResume()
-        refreshSetupBanner()
-    }
-
-    private fun refreshSetupBanner() {
-        lifecycleScope.launch {
-            val (bootstrapInstalled, missing) = withContext(Dispatchers.IO) {
-                TermuxInstaller.isBootstrapInstalled() to EnvPackages.missingEnvPackages()
-            }
-            when {
-                !bootstrapInstalled -> {
-                    binding.tvBannerTitle.setText(R.string.title_setup_not_completed)
-                    binding.tvBannerMsg.setText(R.string.msg_setup_not_completed)
-                    binding.setupBanner.isVisible = true
-                }
-
-                missing.isNotEmpty() -> {
-                    binding.tvBannerTitle.setText(R.string.title_env_not_completed)
-                    binding.tvBannerMsg.setText(
-                        getString(R.string.msg_env_missing, missing.joinToString(", ")),
-                    )
-                    binding.setupBanner.isVisible = true
-                }
-
-                else -> binding.setupBanner.isVisible = false
-            }
-        }
-    }
-
-private fun launchIdeSetup() {
+internal fun launchIdeSetup() {
     startActivity(Intent(this, SetupActivity::class.java))
   }
 
-  private fun launchSdkManager() {
+  internal fun launchSdkManager() {
     startActivity(Intent(this, SdkManagerActivity::class.java))
   }
 
@@ -394,21 +371,8 @@ private fun launchIdeSetup() {
             view.isVisible = view == currentFragment
         }
 
-        syncRailSelection(screen)
+        updateSidebarSelection(screen)
         syncToolbarTitle(screen)
-    }
-
-    private fun syncRailSelection(screen: Int?) {
-        val itemId = when (screen) {
-            SCREEN_MAIN -> R.id.nav_project
-            SCREEN_SDK_MANAGER -> R.id.nav_sdk
-            SCREEN_SETTINGS -> R.id.nav_settings
-            SCREEN_ABOUT -> R.id.nav_about
-            else -> R.id.nav_project
-        }
-        syncingRail = true
-        binding.navRail.selectedItemId = itemId
-        syncingRail = false
     }
 
     private fun syncToolbarTitle(screen: Int?) {
