@@ -613,11 +613,25 @@ class SdkManagerFragment : Fragment() {
         network: Network,
         networkCapabilities: NetworkCapabilities
       ) {
-        updateConnectionStatus(networkCapabilities)
+        val host = activity
+        if (host != null) {
+          host.runOnUiThread {
+            if (isAdded) {
+              updateConnectionStatus(networkCapabilities)
+            }
+          }
+        }
       }
 
       override fun onLost(network: Network) {
-        updateConnectionStatus(ConnectionInfo.UNKNOWN)
+        val host = activity
+        if (host != null) {
+          host.runOnUiThread {
+            if (isAdded) {
+              updateConnectionStatus(ConnectionInfo.UNKNOWN)
+            }
+          }
+        }
       }
     }
 

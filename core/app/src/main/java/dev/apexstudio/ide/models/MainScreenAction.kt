@@ -107,10 +107,10 @@ constructor(
           openProject,
           cloneGitRepository,
           openTerminal,
+          sdkManager,
           preferences,
           donate,
-          docs,
-          sdkManager
+          docs
         )
       }
     }
