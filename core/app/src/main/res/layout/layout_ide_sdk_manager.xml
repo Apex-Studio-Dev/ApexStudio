@@ -15,131 +15,251 @@
   ~   along with ApexStudio.  If not, see <https://www.gnu.org/licenses/>.
   -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="wrap_content"
-  android:orientation="vertical">
+  android:layout_height="match_parent"
+  android:fillViewport="true">
 
   <LinearLayout
-    android:id="@+id/connection_info_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp">
 
-    <include
-      android:id="@+id/no_connection"
-      layout="@layout/layout_chip_error"
+    <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="12dp"
+      android:text="@string/label_sdk_manager"
+      android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+
+    <TextView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_marginTop="4dp"
-      android:layout_marginBottom="4dp" />
+      android:text="@string/subtitle_sdk_manager"
+      android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+      android:textColor="?attr/colorOnSurfaceVariant" />
 
-    <include
-      android:id="@+id/cellular_connection"
-      layout="@layout/layout_chip_warning"
+    <LinearLayout
+      android:id="@+id/connection_info_container"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginTop="4dp"
-      android:layout_marginBottom="4dp" />
+      android:orientation="vertical"
+      android:layout_marginTop="12dp">
 
-    <include
-      android:id="@+id/metered_connection"
-      layout="@layout/layout_chip_warning"
+      <include
+        android:id="@+id/no_connection"
+        layout="@layout/layout_chip_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+
+      <include
+        android:id="@+id/cellular_connection"
+        layout="@layout/layout_chip_warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+
+      <include
+        android:id="@+id/metered_connection"
+        layout="@layout/layout_chip_warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+
+      <include
+        android:id="@+id/background_data_restricted"
+        layout="@layout/layout_chip_warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginTop="4dp"
-      android:layout_marginBottom="4dp" />
+      android:layout_marginTop="16dp"
+      app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+      app:cardCornerRadius="16dp"
+      app:cardElevation="0dp">
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
-    <include
-      android:id="@+id/background_data_restricted"
-      layout="@layout/layout_chip_warning"
+        <com.google.android.material.textview.MaterialTextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/label_jdk"
+          android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+        <com.google.android.material.textfield.TextInputLayout
+          android:id="@+id/jdk_version_layout"
+          style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="8dp"
+          android:hint="@string/hin_jdk_version"
+          android:labelFor="@id/jdk_version">
+
+          <com.google.android.material.textfield.MaterialAutoCompleteTextView
+            android:id="@+id/jdk_version"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginTop="4dp"
-      android:layout_marginBottom="4dp" />
+      android:layout_marginTop="12dp"
+      app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+      app:cardCornerRadius="16dp"
+      app:cardElevation="0dp">
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <com.google.android.material.textview.MaterialTextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/label_platforms"
+          android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+        <LinearLayout
+          android:id="@+id/ll_platforms"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="4dp"
+          android:orientation="vertical" />
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="12dp"
+      app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+      app:cardCornerRadius="16dp"
+      app:cardElevation="0dp">
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <com.google.android.material.textview.MaterialTextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/label_build_tools"
+          android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+        <LinearLayout
+          android:id="@+id/ll_build_tools"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="4dp"
+          android:orientation="vertical" />
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="12dp"
+      app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+      app:cardCornerRadius="16dp"
+      app:cardElevation="0dp">
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <com.google.android.material.textview.MaterialTextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/label_ndk"
+          android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+        <LinearLayout
+          android:id="@+id/ll_ndk"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="4dp"
+          android:orientation="vertical" />
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="12dp"
+      app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+      app:cardCornerRadius="16dp"
+      app:cardElevation="0dp">
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <com.google.android.material.textview.MaterialTextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="@string/label_cmake"
+          android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+        <LinearLayout
+          android:id="@+id/ll_cmake"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="4dp"
+          android:orientation="vertical" />
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+      android:id="@+id/tv_install_status"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="12dp"
+      android:text="@string/msg_sdk_manager_installing"
+      android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+      android:visibility="gone"
+      tools:visibility="visible" />
+
+    <Space
+      android:layout_width="match_parent"
+      android:layout_height="16dp" />
   </LinearLayout>
-
-  <com.google.android.material.textfield.TextInputLayout
-    android:id="@+id/jdk_version_layout"
-    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
-    android:hint="@string/hin_jdk_version"
-    android:labelFor="@id/jdk_version">
-
-    <com.google.android.material.textfield.MaterialAutoCompleteTextView
-      android:id="@+id/jdk_version"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:inputType="none" />
-  </com.google.android.material.textfield.TextInputLayout>
-
-  <com.google.android.material.textview.MaterialTextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="16dp"
-    android:text="@string/label_platforms"
-    android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
-
-  <LinearLayout
-    android:id="@+id/ll_platforms"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="4dp"
-    android:orientation="vertical" />
-
-  <com.google.android.material.textview.MaterialTextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
-    android:text="@string/label_build_tools"
-    android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
-
-  <LinearLayout
-    android:id="@+id/ll_build_tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="4dp"
-    android:orientation="vertical" />
-
-  <com.google.android.material.textview.MaterialTextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
-    android:text="@string/label_ndk"
-    android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
-
-  <LinearLayout
-    android:id="@+id/ll_ndk"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="4dp"
-    android:orientation="vertical" />
-
-  <com.google.android.material.textview.MaterialTextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
-    android:text="@string/label_cmake"
-    android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
-
-  <LinearLayout
-    android:id="@+id/ll_cmake"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="4dp"
-    android:orientation="vertical" />
-
-  <TextView
-    android:id="@+id/tv_install_status"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="12dp"
-    android:text="@string/msg_sdk_manager_installing"
-    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-    android:visibility="gone"
-    tools:visibility="visible" />
-</LinearLayout>
+</androidx.core.widget.NestedScrollView>

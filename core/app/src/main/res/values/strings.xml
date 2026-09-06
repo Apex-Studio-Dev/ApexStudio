@@ -61,4 +61,13 @@
   <string name="msg_sdk_manager_up_to_date">SDK components are already installed.</string>
   <string name="msg_setup_toolchain_failed">Toolchain install failed (exit code %1$d). Retry when ready; Continue stays disabled until it succeeds.</string>
   <string name="msg_setup_toolchain_error">Unexpected error: %1$s</string>
+
+  <!--  SDK Manager -->
+  <string name="label_sdk_manager">SDK Manager</string>
+  <string name="subtitle_sdk_manager">Select the JDK and SDK components to install. Installed components are locked and can be removed at any time.</string>
+  <string name="msg_sdk_component_installed">Installed</string>
+  <string name="action_uninstall">Uninstall</string>
+  <string name="msg_sdk_manager_uninstalling">Uninstalling %1$s...</string>
+  <string name="msg_sdk_manager_uninstalled">Component uninstalled.</string>
+  <string name="msg_sdk_manager_uninstall_failed">Uninstall failed (exit code %1$d).</string>
 </resources>

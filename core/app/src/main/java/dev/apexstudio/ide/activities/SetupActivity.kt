@@ -20,6 +20,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.core.graphics.Insets
+import androidx.core.view.isVisible
 import com.termux.app.TermuxInstaller
 import dev.apexstudio.ide.R
 import dev.apexstudio.ide.app.EdgeToEdgeIDEActivity
@@ -73,6 +74,8 @@ class SetupActivity : EdgeToEdgeIDEActivity() {
   }
 
   private fun onSetupFinished() {
+    binding.terminalSpinner.isVisible = false
+    binding.terminalProgress.isVisible = false
     binding.tvStatus.setText(R.string.status_setup_done)
     binding.btnContinue.isEnabled = true
   }

@@ -32,15 +32,19 @@ import android.text.Html
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.URLSpan
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
 import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.blankj.utilcode.util.ResourceUtils
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.termux.app.TermuxInstaller
 import dev.apexstudio.ide.R
@@ -49,6 +53,7 @@ import dev.apexstudio.ide.resources.R.string
 import dev.apexstudio.ide.utils.ConnectionInfo
 import dev.apexstudio.ide.utils.Environment
 import dev.apexstudio.ide.utils.flashError
+import dev.apexstudio.ide.utils.flashSuccess
 import dev.apexstudio.ide.utils.getConnectionInfo
 import org.json.JSONObject
 import java.io.File
@@ -87,6 +92,12 @@ class SdkManagerFragment : Fragment() {
    */
   var onComplete: (() -> Unit)? = null
 
+  /**
+   * Called whenever the set of installed/selected components changes, so the
+   * host can re-evaluate e.g. the visibility of the install button.
+   */
+  var onStateChanged: (() -> Unit)? = null
+
   val isInstalling: Boolean
     get() = installingToolchain
 
@@ -124,30 +135,40 @@ class SdkManagerFragment : Fragment() {
         com.google.android.material.R.layout.m3_auto_complete_simple_item,
         jdkDisplayNames)
       )
-
-      val platformValues = manifest.getJSONArray("platforms").toStringList()
-      selectedPlatforms += platformValues.firstOrNull() ?: ""
-      populateCheckboxList(llPlatforms, platformValues.map { "API $it" to it },
-        selectedPlatforms)
-
-      val buildTools = manifest.getJSONArray("build_tools").toStringList()
-      selectedBuildTools += buildTools.firstOrNull() ?: ""
-      populateCheckboxList(llBuildTools, buildTools.map { "Build-tools $it" to it },
-        selectedBuildTools)
-
-      val ndks = manifest.getJSONArray("ndk").toObjectList().map {
-        it.getString("display") to it.getString("version")
-      }
-      populateCheckboxList(llNdk, ndks, selectedNdkVersions)
-
-      val cmakes = manifest.getJSONArray("cmake").toObjectList().map {
-        it.getString("display") to it.getString("version")
-      }
-      populateCheckboxList(llCmake, cmakes, selectedCmakeVersions)
     }
+
+    refreshComponentLists()
 
     updateConnectionStatus()
     return content.root
+  }
+
+  private fun refreshComponentLists() {
+    content.apply {
+      val platformValues = readToolchainManifest().getJSONArray("platforms").toStringList()
+      if (selectedPlatforms.isEmpty()) selectedPlatforms += platformValues.firstOrNull().orEmpty()
+      populateCheckboxList(llPlatforms, platformValues.map { "API $it" to it },
+        selectedPlatforms, "platform") { platformInstalled(it) }
+
+      val buildTools = readToolchainManifest().getJSONArray("build_tools").toStringList()
+      if (selectedBuildTools.isEmpty()) selectedBuildTools += buildTools.firstOrNull().orEmpty()
+      populateCheckboxList(llBuildTools, buildTools.map { "Build-tools $it" to it },
+        selectedBuildTools, "build-tools") { buildToolsInstalled(it) }
+
+      val ndks = readToolchainManifest().getJSONArray("ndk").toObjectList().map {
+        it.getString("display") to it.getString("version")
+      }
+      populateCheckboxList(llNdk, ndks, selectedNdkVersions, "ndk") {
+        File(Environment.ANDROID_HOME, "ndk/$it").exists()
+      }
+
+      val cmakes = readToolchainManifest().getJSONArray("cmake").toObjectList().map {
+        it.getString("display") to it.getString("version")
+      }
+      populateCheckboxList(llCmake, cmakes, selectedCmakeVersions, "cmake") {
+        File(Environment.ANDROID_HOME, "cmake/$it").isDirectory
+      }
+    }
   }
 
   fun needsInstall(): Boolean {
@@ -217,6 +238,7 @@ class SdkManagerFragment : Fragment() {
         Environment.putEnvironment(env, false)
         env["PREFIX"] = Environment.PREFIX.absolutePath
         env["TMPDIR"] = Environment.TMP_DIR.absolutePath
+        env["ANDROID_HOME"] = Environment.ANDROID_HOME.absolutePath
         env["PATH"] = Environment.BIN_DIR.absolutePath + ":" + System.getenv("PATH")
 
         val process = ProcessBuilder(
@@ -237,6 +259,7 @@ class SdkManagerFragment : Fragment() {
         val code = process.waitFor()
         requireActivity().runOnUiThread {
           if (code == 0) {
+            refreshComponentLists()
             onComplete()
           } else {
             appendInstallLine(getString(R.string.msg_setup_toolchain_failed, code))
@@ -289,23 +312,166 @@ class SdkManagerFragment : Fragment() {
   private fun populateCheckboxList(
     container: ViewGroup,
     items: List<Pair<String, String>>,
-    selected: MutableSet<String>
+    selected: MutableSet<String>,
+    typeToken: String,
+    isInstalled: (String) -> Boolean
   ) {
     container.removeAllViews()
     items.forEach { (label, value) ->
-      val checkBox = MaterialCheckBox(requireContext())
-      checkBox.text = label
-      checkBox.isChecked = selected.contains(value)
-      checkBox.minHeight = 0
-      checkBox.setOnCheckedChangeListener { _, isChecked ->
-        if (isChecked) {
-          selected += value
+      val installed = isInstalled(value)
+
+      val row = LinearLayout(requireContext()).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+      }
+
+      val checkBox = MaterialCheckBox(requireContext()).apply {
+        text = if (installed) {
+          "$label  (${getString(R.string.msg_sdk_component_installed)})"
         } else {
-          selected -= value
+          label
+        }
+        isChecked = selected.contains(value)
+        isEnabled = !installed
+        minHeight = 0
+        setTextColor(MaterialColors.getColor(requireContext(),
+          com.google.android.material.R.attr.colorOnSurfaceVariant, 0))
+        if (!installed) {
+          checkBox.setTextColor(MaterialColors.getColor(requireContext(),
+            com.google.android.material.R.attr.colorOnSurface, 0))
+        }
+        setOnCheckedChangeListener { _, isChecked ->
+          if (isChecked) {
+            selected += value
+          } else {
+            selected -= value
+          }
+          onStateChanged?.invoke()
         }
       }
-      container.addView(checkBox)
+      row.addView(checkBox, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+
+      if (installed) {
+        val uninstall = MaterialButton(
+          requireContext(),
+          null,
+          com.google.android.material.R.attr.borderlessButtonStyle).apply {
+          text = getString(R.string.action_uninstall)
+          isAllCaps = false
+          minWidth = 0
+          minHeight = 0
+          insetTop = 0
+          insetBottom = 0
+          textSize = 12f
+          setTextColor(MaterialColors.getColor(
+            requireContext(), com.google.android.material.R.attr.colorPrimary, 0))
+          setOnClickListener {
+            uninstallComponent(typeToken, value)
+          }
+        }
+        row.addView(uninstall, LinearLayout.LayoutParams(
+          ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+      }
+
+      container.addView(row)
     }
+  }
+
+  private fun uninstallComponent(typeToken: String, value: String) {
+    if (installingToolchain) {
+      return
+    }
+
+    if (!TermuxInstaller.isBootstrapInstalled()) {
+      flashError(R.string.msg_setup_bootstrap_wait)
+      return
+    }
+
+    installingToolchain = true
+    setUiEnabled(false)
+    content.tvInstallStatus.text =
+      getString(R.string.msg_sdk_manager_uninstalling, labelOf(typeToken, value)) + "\n"
+    content.tvInstallStatus.isVisible = true
+
+    Thread {
+      try {
+        val scriptDir = File(Environment.PREFIX, "etc/apexstudio")
+        scriptDir.mkdirs()
+        val script = File(scriptDir, "uninstall-toolchain.sh")
+        if (!ResourceUtils.copyFileFromAssets(
+            "data/common/uninstall-toolchain.sh", script.absolutePath)) {
+          throw IllegalStateException("asset copy failed: install-toolchain.sh")
+        }
+        script.setExecutable(true)
+
+        val env = HashMap<String, String>()
+        Environment.putEnvironment(env, false)
+        env["PREFIX"] = Environment.PREFIX.absolutePath
+        env["TMPDIR"] = Environment.TMP_DIR.absolutePath
+        env["ANDROID_HOME"] = Environment.ANDROID_HOME.absolutePath
+        env["PATH"] = Environment.BIN_DIR.absolutePath + ":" + System.getenv("PATH")
+
+        val process = ProcessBuilder(
+          Environment.BASH_SHELL.absolutePath,
+          script.absolutePath,
+          "--$typeToken", value
+        ).redirectErrorStream(true)
+          .apply { environment().putAll(env) }
+          .start()
+
+        process.inputStream.bufferedReader().forEachLine { line ->
+          requireActivity().runOnUiThread {
+            if (isAdded) {
+              appendInstallLine(line)
+            }
+          }
+        }
+        val code = process.waitFor()
+        requireActivity().runOnUiThread {
+          if (isAdded) {
+            if (code == 0) {
+              when (typeToken) {
+                "platform" -> selectedPlatforms -= value
+                "build-tools" -> selectedBuildTools -= value
+                "ndk" -> selectedNdkVersions -= value
+                "cmake" -> selectedCmakeVersions -= value
+              }
+              refreshComponentLists()
+              flashSuccess(R.string.msg_sdk_manager_uninstalled)
+            } else {
+              appendInstallLine(getString(R.string.msg_sdk_manager_uninstall_failed, code))
+            }
+          }
+        }
+      } catch (e: Exception) {
+        requireActivity().runOnUiThread {
+          if (isAdded) {
+            appendInstallLine(getString(R.string.msg_setup_toolchain_error, e.message))
+          }
+        }
+      } finally {
+        requireActivity().runOnUiThread {
+          installingToolchain = false
+          if (isAdded) {
+            setUiEnabled(true)
+          }
+        }
+      }
+    }.apply {
+      isDaemon = true
+      start()
+    }
+  }
+
+  private fun labelOf(typeToken: String, value: String): String {
+    val configurable = when (typeToken) {
+      "platform" -> getString(R.string.label_platforms)
+      "build-tools" -> getString(R.string.label_build_tools)
+      "ndk" -> getString(R.string.label_ndk)
+      "cmake" -> getString(R.string.label_cmake)
+      else -> typeToken
+    }
+    return "$configurable $value"
   }
 
   private fun platformInstalled(api: String): Boolean =

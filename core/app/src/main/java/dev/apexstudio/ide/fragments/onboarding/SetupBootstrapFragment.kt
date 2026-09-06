@@ -37,6 +37,9 @@ class SetupBootstrapFragment : OnboardingFragment(), SlidePolicy {
   @Volatile
   private var bootstrapReady = false
 
+  @Volatile
+  private var setupHandled = false
+
   companion object {
 
     @JvmStatic
@@ -53,6 +56,16 @@ class SetupBootstrapFragment : OnboardingFragment(), SlidePolicy {
 
   override fun createContentView(parent: ViewGroup, attachToParent: Boolean) {
     _content = LayoutSetupBootstrapBinding.inflate(layoutInflater, parent, attachToParent)
+  }
+
+  override fun onResume() {
+    super.onResume()
+    // onResume runs only when this slide becomes the current page of the pager,
+    // so the install (and the auto-skip) starts exactly when the user reaches
+    // it - not when the pager pre-creates the slide while an earlier one is
+    // still being shown.
+    if (setupHandled) return
+    setupHandled = true
 
     if (TermuxInstaller.isBootstrapInstalled()) {
       bootstrapReady = true
@@ -87,6 +100,8 @@ class SetupBootstrapFragment : OnboardingFragment(), SlidePolicy {
 
   private fun setStatus(text: String, done: Boolean) {
     content.tvStatus.text = text
+    content.terminalSpinner.isVisible = !done
+    content.terminalProgress.isVisible = !done
     content.tvStatus.setCompoundDrawablesRelativeWithIntrinsicBounds(
       0, 0, if (done) R.drawable.ic_check else 0, 0
     )

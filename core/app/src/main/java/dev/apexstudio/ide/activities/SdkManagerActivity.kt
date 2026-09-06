@@ -45,6 +45,8 @@ class SdkManagerActivity : EdgeToEdgeIDEActivity() {
 
   private lateinit var sdkManagerFragment: SdkManagerFragment
 
+  private var lastNeedsInstall = true
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -69,8 +71,17 @@ class SdkManagerActivity : EdgeToEdgeIDEActivity() {
           return@runOnUiThread
         }
         binding.btnSdkInstall.isEnabled = true
-        binding.btnSdkInstall.visibility = View.VISIBLE
+        refreshInstallButton(notify = false)
         flashSuccess(R.string.msg_sdk_manager_installed)
+      }
+    }
+
+    sdkManagerFragment.onStateChanged = {
+      runOnUiThread {
+        if (isFinishing || isDestroyed) {
+          return@runOnUiThread
+        }
+        refreshInstallButton(notify = true)
       }
     }
 
@@ -83,17 +94,24 @@ class SdkManagerActivity : EdgeToEdgeIDEActivity() {
     }
 
     binding.btnSdkInstall.post {
-      if (sdkManagerFragment.needsInstall()) {
-        binding.btnSdkInstall.visibility = View.VISIBLE
-      } else {
-        binding.btnSdkInstall.visibility = View.GONE
-        flashInfo(R.string.msg_sdk_manager_up_to_date)
-      }
+      refreshInstallButton(notify = true)
+    }
+  }
+
+  private fun refreshInstallButton(notify: Boolean) {
+    val needsInstall = sdkManagerFragment.needsInstall()
+    binding.btnSdkInstall.visibility = if (needsInstall) View.VISIBLE else View.GONE
+    val changed = needsInstall != lastNeedsInstall
+    lastNeedsInstall = needsInstall
+    if (notify && !needsInstall && changed) {
+      flashInfo(R.string.msg_sdk_manager_up_to_date)
     }
   }
 
   override fun onApplySystemBarInsets(insets: Insets) {
-    binding.root.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+    // The AppBarLayout consumes the top inset via fitsSystemWindows, so only
+    // the sides and the bottom (nav bar) must be padded here.
+    binding.root.setPadding(insets.left, 0, insets.right, insets.bottom)
   }
 
   override fun bindLayout(): View {

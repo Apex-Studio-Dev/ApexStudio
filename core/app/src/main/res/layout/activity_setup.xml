@@ -27,7 +27,9 @@
         android:layout_marginTop="24dp"
         app:cardBackgroundColor="#FF0B0D12"
         app:cardCornerRadius="16dp"
-        app:elevation="0dp">
+        app:elevation="0dp"
+        app:strokeColor="#22FFFFFF"
+        app:strokeWidth="1dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -46,7 +48,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_setup_terminal"
-                    android:textColor="#66FFFFFF"
+                    android:textColor="#80FFFFFF"
                     android:textAllCaps="true"
                     android:textSize="11sp" />
 
@@ -55,18 +57,29 @@
                     android:layout_height="1dp"
                     android:layout_weight="1" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="●  ●  ●"
-                    android:textColor="#33FFFFFF"
-                    android:textSize="8sp" />
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/terminal_spinner"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    app:indeterminate="true"
+                    app:indicatorColor="#80FFFFFF"
+                    app:indicatorSize="16dp"
+                    app:trackThickness="1.5dp" />
             </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="#22FFFFFF" />
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/terminal_progress"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                app:indeterminate="true"
+                app:indicatorColor="?attr/colorPrimary"
+                app:showTrack="false"
+                app:trackCornerRadius="2dp" />
 
             <ScrollView
                 android:id="@+id/terminal_scroll"
