@@ -36,14 +36,14 @@ class TerminalBootstrapPackagesPlugin : Plugin<Project> {
      * The bootstrap packages, mapped with the CPU ABI as the key and the ZIP file's sha256sum as the value.
      */
     private val BOOTSTRAP_PACKAGES = mapOf(
-      "aarch64" to "473abdd3d5ec637277a98e32754fc58454d78fdf2a1859a9cf2a9b97bf15b8eb",
-      "arm" to "42fc10fe13f729b43e41193a7702157fbc4e8a4055a310c9c5820d6b26819c8a"
+      "aarch64" to "a2955182b5cd4a7cb7156f0a43e95bf28cb0f204f88e0e8fca022be054c4c591",
+      "arm" to "3c9231b1acc33c55d26506c8fbdce0b37205e8561436f92ea99ac9f414a037f6"
     )
 
     /**
      * The bootstrap packages version, basically the tag name of the GitHub release.
      */
-    private const val BOOTSTRAP_PACKAGES_VERSION = "2026.09.06-r1+apt.apexstudio-7"
+    private const val BOOTSTRAP_PACKAGES_VERSION = "2026.09.06-r+apt.apexstudio-7"
 
     private const val PACKAGES_DOWNLOAD_URL =
       "https://github.com/Apex-Studio-Dev/termux-packages/releases/download/bootstrap-%1\$s/bootstrap-%2\$s.zip"
