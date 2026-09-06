@@ -45,6 +45,7 @@ import dev.apexstudio.ide.templates.ITemplateProvider
 import dev.apexstudio.ide.utils.DialogUtils
 import dev.apexstudio.ide.utils.EnvPackages
 import dev.apexstudio.ide.utils.flashInfo
+import dev.apexstudio.ide.utils.flashSuccess
 import dev.apexstudio.ide.utils.getCreatedTime
 import dev.apexstudio.ide.utils.getLastModifiedTime
 import dev.apexstudio.ide.utils.readProjectLanguage
