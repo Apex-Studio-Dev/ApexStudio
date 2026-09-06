@@ -78,8 +78,11 @@
 
   <androidx.recyclerview.widget.RecyclerView
     android:id="@+id/actions"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:clipToPadding="false"
+    android:paddingTop="4dp"
+    android:paddingBottom="16dp"
     app:layout_constraintStart_toEndOf="@id/greeting"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintTop_toTopOf="parent"
