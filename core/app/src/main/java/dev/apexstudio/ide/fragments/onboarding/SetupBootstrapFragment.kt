@@ -58,6 +58,7 @@ class SetupBootstrapFragment : OnboardingFragment(), SlidePolicy {
       bootstrapReady = true
       appendLine("[setup] Bootstrap is already installed.")
       setStatus(getString(R.string.msg_setup_bootstrap_installed), done = true)
+      (activity as? OnboardingActivity)?.advanceToNextSlide()
       return
     }
 

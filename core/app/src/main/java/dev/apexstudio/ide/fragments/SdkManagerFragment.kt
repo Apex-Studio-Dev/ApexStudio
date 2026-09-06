@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *   along with ApexStudio.  If not, see <https://www.gnu.org/licenses/>.
  */
-package dev.apexstudio.ide.fragments.onboarding
+package dev.apexstudio.ide.fragments
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -32,12 +32,13 @@ import android.text.Html
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.URLSpan
+import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import com.blankj.utilcode.util.ResourceUtils
-import com.github.appintro.SlidePolicy
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.termux.app.TermuxInstaller
@@ -52,16 +53,18 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * SDK manager slide of the onboarding flow.
+ * Android SDK manager.
  *
  * Lets the user pick which JDK, Android platforms, build-tools, NDK and CMake
  * versions to install (multi-version capable, driven by the bundled
  * `data/common/toolchain-manifest.json` catalog). The selection is applied by
- * `install-toolchain.sh` when the user presses `Done`.
+ * `install-toolchain.sh`. This fragment is reusable: it can be hosted inside an
+ * activity without being tied to the onboarding flow; the host decides what
+ * happens when installation completes via [onComplete].
  *
- * @author Akash Yadav
+ * @author Apex Studio Dev
  */
-class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
+class SdkManagerFragment : Fragment() {
 
   private var _content: LayoutIdeSdkManagerBinding? = null
   private val content: LayoutIdeSdkManagerBinding
@@ -78,27 +81,29 @@ class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
   @Volatile
   private var installingToolchain = false
 
+  /**
+   * Called (on the main thread) when the toolchain installation completes successfully.
+   */
+  var onComplete: (() -> Unit)? = null
+
   val isInstalling: Boolean
     get() = installingToolchain
 
   companion object {
 
     @JvmStatic
-    fun newInstance(context: Context): IdeSetupConfigurationFragment {
-      return IdeSetupConfigurationFragment().apply {
-        arguments = Bundle().apply {
-          putCharSequence(KEY_ONBOARDING_TITLE,
-            context.getString(R.string.title_install_tools_apex))
-          putCharSequence(KEY_ONBOARDING_SUBTITLE,
-            context.getString(R.string.subtitle_install_tools_apex))
-        }
-      }
+    fun newInstance(): SdkManagerFragment {
+      return SdkManagerFragment()
     }
   }
 
   @SuppressLint("PrivateResource")
-  override fun createContentView(parent: ViewGroup, attachToParent: Boolean) {
-    _content = LayoutIdeSdkManagerBinding.inflate(layoutInflater, parent, attachToParent)
+  override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?
+  ): View {
+    _content = LayoutIdeSdkManagerBinding.inflate(inflater, container, false)
 
     content.apply {
       noConnection.root.setText(R.string.msg_no_internet)
@@ -141,6 +146,7 @@ class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
     }
 
     updateConnectionStatus()
+    return content.root
   }
 
   fun needsInstall(): Boolean {
@@ -426,13 +432,6 @@ class IdeSetupConfigurationFragment : OnboardingFragment(), SlidePolicy {
     backgroundDataRestrictionReceiver = null
     networkStateChangeCallback = null
     _content = null
-  }
-
-  override val isPolicyRespected: Boolean
-    get() = getConnectionInfo(requireContext()).isConnected
-
-  override fun onUserIllegallyRequestedNextPage() {
-    flashError(string.msg_no_internet)
   }
 
   private fun monitorNetworkState() {

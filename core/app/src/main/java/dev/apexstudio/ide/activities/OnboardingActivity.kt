@@ -30,7 +30,6 @@ import dev.apexstudio.ide.app.configuration.IDEBuildConfigProvider
 import dev.apexstudio.ide.app.configuration.IJdkDistributionProvider
 import dev.apexstudio.ide.fragments.onboarding.EnvPackagesFragment
 import dev.apexstudio.ide.fragments.onboarding.GreetingFragment
-import dev.apexstudio.ide.fragments.onboarding.IdeSetupConfigurationFragment
 import dev.apexstudio.ide.fragments.onboarding.OnboardingInfoFragment
 import dev.apexstudio.ide.fragments.onboarding.PermissionsFragment
 import dev.apexstudio.ide.fragments.onboarding.SetupBootstrapFragment
@@ -40,7 +39,6 @@ import dev.apexstudio.ide.preferences.internal.StatPreferences
 import dev.apexstudio.ide.preferences.internal.prefManager
 import dev.apexstudio.ide.tasks.launchAsyncWithProgress
 import dev.apexstudio.ide.ui.themes.IThemeManager
-import dev.apexstudio.ide.utils.Environment
 import com.termux.shared.android.PackageUtils
 import com.termux.shared.markdown.MarkdownUtils
 import com.termux.shared.termux.TermuxConstants
@@ -119,9 +117,10 @@ class OnboardingActivity : AppIntro2() {
       addSlide(PermissionsFragment.newInstance(this))
     }
 
-    addSlide(SetupBootstrapFragment.newInstance(this))
+    if (!TermuxInstaller.isBootstrapInstalled()) {
+      addSlide(SetupBootstrapFragment.newInstance(this))
+    }
     addSlide(EnvPackagesFragment.newInstance(this))
-    addSlide(IdeSetupConfigurationFragment.newInstance(this))
   }
 
   fun advanceToNextSlide() {
@@ -163,27 +162,7 @@ class OnboardingActivity : AppIntro2() {
       return
     }
 
-    val sdkFragment = currentFragment as? IdeSetupConfigurationFragment
-    if (sdkFragment != null && sdkFragment.isInstalling) {
-      return
-    }
-    if (sdkFragment != null && sdkFragment.needsInstall()) {
-      sdkFragment.installToolchain {
-        runOnUiThread {
-          if (!isFinishing && !isDestroyed) {
-            tryNavigateToMainIfSetupIsCompleted()
-          }
-        }
-      }
-      return
-    }
-
     tryNavigateToMainIfSetupIsCompleted()
-  }
-
-  private fun checkToolsIsInstalled(): Boolean {
-    return IJdkDistributionProvider.getInstance().installedDistributions.isNotEmpty()
-        && Environment.ANDROID_HOME.exists()
   }
 
   private fun isSetupCompleted(): Boolean {

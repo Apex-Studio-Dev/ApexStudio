@@ -133,10 +133,7 @@ class EnvPackagesFragment : OnboardingFragment(), SlidePolicy {
 
         val process = ProcessBuilder(
           Environment.BASH_SHELL.absolutePath,
-          script.absolutePath,
-          "--env-only",
-          "--jdk",
-          "21"
+          script.absolutePath
         ).redirectErrorStream(true)
           .apply { environment().putAll(env) }
           .start()

@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import dev.apexstudio.ide.activities.MainActivity
 import dev.apexstudio.ide.activities.PreferencesActivity
+import dev.apexstudio.ide.activities.SdkManagerActivity
 import dev.apexstudio.ide.activities.TerminalActivity
 import dev.apexstudio.ide.adapters.MainActionsListAdapter
 import dev.apexstudio.ide.app.BaseApplication
@@ -70,6 +71,8 @@ class MainFragment : BaseFragment() {
           MainScreenAction.ACTION_PREFERENCES -> gotoPreferences()
           MainScreenAction.ACTION_DONATE -> BaseApplication.getBaseInstance().openDonationsPage()
           MainScreenAction.ACTION_DOCS -> BaseApplication.getBaseInstance().openDocs()
+          MainScreenAction.ACTION_SDK_MANAGER -> startActivity(
+            Intent(requireActivity(), SdkManagerActivity::class.java))
         }
       }
 

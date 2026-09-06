@@ -111,8 +111,15 @@ class MainActivity : EdgeToEdgeIDEActivity() {
 
         onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
 
-        binding.setupBanner.setOnClickListener { launchIdeSetup() }
-        binding.btnSetupNow.setOnClickListener { launchIdeSetup() }
+        val onClick = { _: View ->
+            if (!TermuxInstaller.isBootstrapInstalled()) {
+                launchIdeSetup()
+            } else {
+                launchSdkManager()
+            }
+        }
+        binding.setupBanner.setOnClickListener(onClick)
+        binding.btnSetupNow.setOnClickListener(onClick)
     }
 
     override fun onResume() {
@@ -145,9 +152,13 @@ class MainActivity : EdgeToEdgeIDEActivity() {
         }
     }
 
-    private fun launchIdeSetup() {
-        startActivity(Intent(this, SetupActivity::class.java))
-    }
+private fun launchIdeSetup() {
+    startActivity(Intent(this, SetupActivity::class.java))
+  }
+
+  private fun launchSdkManager() {
+    startActivity(Intent(this, SdkManagerActivity::class.java))
+  }
 
     /** @return true if bootstrap is installed and the user may continue; otherwise opens the setup screen. */
     fun requireBootstrapSetup(): Boolean {
@@ -158,7 +169,7 @@ class MainActivity : EdgeToEdgeIDEActivity() {
         return false
     }
 
-    /** @return true if the environment packages are installed and the user may continue; otherwise opens the setup screen. */
+    /** @return true if the environment packages are installed and the user may continue; otherwise opens the SDK manager screen. */
     fun requireEnvPackagesSetup(): Boolean {
         if (!TermuxInstaller.isBootstrapInstalled()) {
             launchIdeSetup()
@@ -167,7 +178,7 @@ class MainActivity : EdgeToEdgeIDEActivity() {
         if (EnvPackages.areEnvPackagesInstalled()) {
             return true
         }
-        launchIdeSetup()
+        launchSdkManager()
         return false
     }
 

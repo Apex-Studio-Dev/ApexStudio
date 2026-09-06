@@ -48,6 +48,7 @@ constructor(
     const val ACTION_PREFERENCES = 5
     const val ACTION_DONATE = 6
     const val ACTION_DOCS = 7
+    const val ACTION_SDK_MANAGER = 8
 
     /**
      * Get all main screen actions.
@@ -96,6 +97,11 @@ constructor(
           R.string.btn_docs,
           R.drawable.ic_docs)
 
+        val sdkManager = MainScreenAction(
+          ACTION_SDK_MANAGER,
+          R.string.title_sdk_manager,
+          R.drawable.ic_min_sdk)
+
         Collections.addAll(this,
           createProject,
           openProject,
@@ -103,7 +109,8 @@ constructor(
           openTerminal,
           preferences,
           donate,
-          docs
+          docs,
+          sdkManager
         )
       }
     }
