@@ -45,8 +45,8 @@ constructor(val actions: List<MainScreenAction> = emptyList()) :
     val binding = holder.binding
     
     binding.root.apply {
-      setText(action.text)
-      setIconResource(action.icon)
+      binding.tvText.text = binding.tvText.context.getString(action.text)
+      binding.icIcon.setImageResource(action.icon)
       setOnClickListener {
         action.onClick?.invoke(action, it)
       }
