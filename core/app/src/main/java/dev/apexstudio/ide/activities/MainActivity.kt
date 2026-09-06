@@ -23,6 +23,7 @@ import android.text.TextUtils
 import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.core.graphics.Insets
+import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.transition.TransitionManager
@@ -30,6 +31,7 @@ import androidx.transition.doOnEnd
 import com.google.android.material.transition.MaterialSharedAxis
 import dev.apexstudio.ide.R
 import dev.apexstudio.ide.activities.editor.EditorActivityKt
+import dev.apexstudio.ide.app.BaseApplication
 import dev.apexstudio.ide.app.EdgeToEdgeIDEActivity
 import dev.apexstudio.ide.databinding.ActivityMainBinding
 import dev.apexstudio.ide.preferences.internal.GeneralPreferences
@@ -120,6 +122,46 @@ class MainActivity : EdgeToEdgeIDEActivity() {
         }
         binding.setupBanner.setOnClickListener(onClick)
         binding.btnSetupNow.setOnClickListener(onClick)
+
+        setupNavigationDrawer()
+    }
+
+    private fun setupNavigationDrawer() {
+        binding.toolbar.setNavigationOnClickListener {
+            binding.drawerLayout.openDrawer(GravityCompat.START)
+        }
+
+        binding.navView.setNavigationItemSelectedListener { item ->
+            binding.drawerLayout.closeDrawer(GravityCompat.START)
+            when (item.itemId) {
+                R.id.nav_home -> if (viewModel.currentScreen.value != SCREEN_MAIN) {
+                    viewModel.setScreen(SCREEN_MAIN)
+                }
+
+                R.id.nav_recent_projects -> if (requireEnvPackagesSetup()) {
+                    viewModel.setScreen(SCREEN_SAVED_PROJECTS)
+                }
+
+                R.id.nav_create_project -> if (requireEnvPackagesSetup()) {
+                    viewModel.setScreen(SCREEN_TEMPLATE_LIST)
+                }
+
+                R.id.nav_clone_repo -> if (requireEnvPackagesSetup()) {
+                    viewModel.setScreen(SCREEN_CLONE_REPO)
+                }
+
+                R.id.nav_terminal -> if (requireBootstrapSetup()) {
+                    startActivity(Intent(this, TerminalActivity::class.java))
+                }
+
+                R.id.nav_sdk_manager -> startActivity(Intent(this, SdkManagerActivity::class.java))
+                R.id.nav_preferences -> startActivity(
+                    Intent(this, PreferencesActivity::class.java))
+                R.id.nav_donate -> BaseApplication.getBaseInstance().openDonationsPage()
+                R.id.nav_docs -> BaseApplication.getBaseInstance().openDocs()
+            }
+            true
+        }
     }
 
     override fun onResume() {

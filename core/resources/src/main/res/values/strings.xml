@@ -21,6 +21,7 @@
     <string name="msg_empty_view">No data</string>
     <string name="title_terminal">Terminal</string>
     <string name="title_sdk_manager">SDK Manager</string>
+    <string name="nav_home">Home</string>
     <string name="reset">Reset</string>
     <string name="app_logs">App Logs</string>
     <string name="ide_logs">IDE Logs</string>
