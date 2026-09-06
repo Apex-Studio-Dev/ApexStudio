@@ -1,16 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout
+<LinearLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
-  android:id="@+id/drawer_layout"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
+  android:orientation="horizontal"
   tools:ignore="RtlCompat">
 
-  <androidx.constraintlayout.widget.ConstraintLayout
-    android:layout_width="match_parent"
+  <LinearLayout
+    android:id="@+id/sidebar"
+    android:layout_width="264dp"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurfaceContainerLow"
+    android:orientation="vertical">
+
+    <com.google.android.material.navigation.NavigationView
+      android:id="@+id/nav_view"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="?attr/colorSurfaceContainerLow"
+      app:headerLayout="@layout/header_drawer"
+      app:itemIconTint="?attr/colorOnSurfaceVariant"
+      app:itemTextColor="?attr/colorOnSurface"
+      app:menu="@menu/sidebar_menu" />
+
+  </LinearLayout>
+
+  <View
+    android:layout_width="1dp"
+    android:layout_height="match_parent"
+    android:background="?attr/colorOutlineVariant" />
+
+  <androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
     android:animateLayoutChanges="true"
     android:orientation="vertical">
 
@@ -29,139 +54,126 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:title="@string/app_name"
-        app:navigationIcon="@drawable/ic_menu"
-        app:navigationContentDescription="@string/nav_home"
         app:titleTextAppearance="@style/TextAppearance.AndroidIDE.TitleLarge.Bold"
         app:titleCentered="true" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
-  <FrameLayout
-    android:id="@+id/fragment_containers_parent"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@id/appbar">
+    <FrameLayout
+      android:id="@+id/fragment_containers_parent"
+      android:layout_width="0dp"
+      android:layout_height="0dp"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/appbar">
 
-    <com.google.android.material.card.MaterialCardView
-      android:id="@+id/setup_banner"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:layout_gravity="top"
-      android:layout_margin="12dp"
-      android:clickable="true"
-      android:focusable="true"
-      android:visibility="gone"
-      app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
-      app:cardCornerRadius="20dp"
-      app:cardElevation="0dp"
-      tools:visibility="visible">
-
-      <LinearLayout
+      <com.google.android.material.card.MaterialCardView
+        android:id="@+id/setup_banner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="16dp">
-
-        <com.google.android.material.imageview.ShapeableImageView
-          android:layout_width="40dp"
-          android:layout_height="40dp"
-          android:contentDescription="@null"
-          android:scaleType="centerInside"
-          android:src="@drawable/ic_alert"
-          app:backgroundTint="?attr/colorTertiaryContainer"
-          app:shapeAppearanceOverlay="@style/AppTheme.ShapeAppearance.Circle"
-          app:tint="?attr/colorOnTertiaryContainer" />
+        android:layout_gravity="top"
+        android:layout_margin="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        tools:visibility="visible">
 
         <LinearLayout
-          android:layout_width="0dp"
+          android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:layout_marginStart="12dp"
-          android:layout_marginEnd="12dp"
-          android:layout_weight="1"
-          android:orientation="vertical">
+          android:gravity="center_vertical"
+          android:orientation="horizontal"
+          android:padding="16dp">
 
-          <TextView
-            android:id="@+id/tv_banner_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/title_setup_not_completed"
-            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-            android:textStyle="bold" />
+          <com.google.android.material.imageview.ShapeableImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="@null"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_alert"
+            app:backgroundTint="?attr/colorTertiaryContainer"
+            app:shapeAppearanceOverlay="@style/AppTheme.ShapeAppearance.Circle"
+            app:tint="?attr/colorOnTertiaryContainer" />
 
-          <TextView
-            android:id="@+id/tv_banner_msg"
-            android:layout_width="match_parent"
+          <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/msg_setup_not_completed"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+              android:id="@+id/tv_banner_title"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:text="@string/title_setup_not_completed"
+              android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+              android:textStyle="bold" />
+
+            <TextView
+              android:id="@+id/tv_banner_msg"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:text="@string/msg_setup_not_completed"
+              android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+          </LinearLayout>
+
+          <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_setup_now"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/action_setup" />
 
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-          android:id="@+id/btn_setup_now"
-          style="@style/Widget.Material3.Button.TextButton"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:text="@string/action_setup" />
+      </com.google.android.material.card.MaterialCardView>
 
-      </LinearLayout>
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <androidx.fragment.app.FragmentContainerView
-      android:id="@+id/main"
-      android:name="dev.apexstudio.ide.fragments.MainFragment"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent" />
-
-    <androidx.fragment.app.FragmentContainerView
-      android:id="@+id/template_list"
-      android:name="dev.apexstudio.ide.fragments.TemplateListFragment"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent" />
-
-    <androidx.fragment.app.FragmentContainerView
-      android:id="@+id/template_details"
-      android:name="dev.apexstudio.ide.fragments.TemplateDetailsFragment"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent" />
-      
-    <androidx.fragment.app.FragmentContainerView
-      android:id="@+id/clone_repository_view"
-      android:name="dev.apexstudio.ide.fragments.CloneRepositoryFragment"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent" 
-      android:visibility="gone" />
-      
       <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/saved_projects_view"
-            android:name="dev.apexstudio.ide.fragments.RecentProjectsFragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-      
-      <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/delete_projects_view"
-            android:name="dev.apexstudio.ide.fragments.DeleteProjectFragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-            
+        android:id="@+id/main"
+        android:name="dev.apexstudio.ide.fragments.MainFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
-  </FrameLayout>
+      <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/template_list"
+        android:name="dev.apexstudio.ide.fragments.TemplateListFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+      <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/template_details"
+        android:name="dev.apexstudio.ide.fragments.TemplateDetailsFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+      <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/clone_repository_view"
+        android:name="dev.apexstudio.ide.fragments.CloneRepositoryFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+      <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/saved_projects_view"
+        android:name="dev.apexstudio.ide.fragments.RecentProjectsFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+      <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/delete_projects_view"
+        android:name="dev.apexstudio.ide.fragments.DeleteProjectFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    </FrameLayout>
 
   </androidx.constraintlayout.widget.ConstraintLayout>
 
-  <com.google.android.material.navigation.NavigationView
-    android:id="@+id/nav_view"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:layout_gravity="start"
-    app:headerLayout="@layout/header_drawer"
-    app:itemIconTint="?attr/colorOnSurfaceVariant"
-    app:itemTextColor="?attr/colorOnSurface"
-    app:menu="@menu/drawer_menu" />
-
-</androidx.drawerlayout.widget.DrawerLayout>
+</LinearLayout>
