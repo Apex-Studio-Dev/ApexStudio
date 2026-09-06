@@ -337,7 +337,7 @@ class SdkManagerFragment : Fragment() {
         setTextColor(MaterialColors.getColor(requireContext(),
           com.google.android.material.R.attr.colorOnSurfaceVariant, 0))
         if (!installed) {
-          checkBox.setTextColor(MaterialColors.getColor(requireContext(),
+          setTextColor(MaterialColors.getColor(requireContext(),
             com.google.android.material.R.attr.colorOnSurface, 0))
         }
         setOnCheckedChangeListener { _, isChecked ->
