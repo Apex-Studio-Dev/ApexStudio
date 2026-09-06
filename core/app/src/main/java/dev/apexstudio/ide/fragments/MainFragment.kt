@@ -1,101 +1,152 @@
+/*
+ *  This file is part of ApexStudio.
+ *
+ *  ApexStudio is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  ApexStudio is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *   along with ApexStudio.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package dev.apexstudio.ide.fragments
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
-import androidx.fragment.app.viewModels
-import com.google.android.material.progressindicator.LinearProgressIndicator
+import androidx.core.view.isVisible
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import dev.apexstudio.ide.activities.MainActivity
-import dev.apexstudio.ide.activities.PreferencesActivity
-import dev.apexstudio.ide.activities.SdkManagerActivity
-import dev.apexstudio.ide.activities.TerminalActivity
-import dev.apexstudio.ide.adapters.MainActionsListAdapter
-import dev.apexstudio.ide.app.BaseApplication
-import dev.apexstudio.ide.app.BaseIDEActivity
-import dev.apexstudio.ide.common.databinding.LayoutDialogProgressBinding
-import dev.apexstudio.ide.databinding.FragmentMainBinding
-import dev.apexstudio.ide.models.MainScreenAction
-import dev.apexstudio.ide.preferences.databinding.LayoutDialogTextInputBinding
-import dev.apexstudio.ide.resources.R.string
-import dev.apexstudio.ide.tasks.runOnUiThread
-import dev.apexstudio.ide.utils.DialogUtils
-import dev.apexstudio.ide.utils.Environment
-import dev.apexstudio.ide.utils.flashError
-import dev.apexstudio.ide.utils.flashSuccess
+import dev.apexstudio.ide.adapters.RecentProjectsAdapter
+import dev.apexstudio.ide.databinding.FragmentProjectHomeBinding
+import dev.apexstudio.ide.utils.Environment.PROJECTS_DIR
+import dev.apexstudio.ide.utils.findValidProjects
+import dev.apexstudio.ide.utils.viewLifecycleScope
 import dev.apexstudio.ide.viewmodel.MainViewModel
-import com.termux.shared.termux.TermuxConstants.TERMUX_APP.TERMUX_ACTIVITY
+import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_CLONE_REPO
+import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_SAVED_PROJECTS
+import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_TEMPLATE_LIST
+import dev.apexstudio.ide.viewmodel.RecentProjectsViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.ProgressMonitor
-import org.slf4j.LoggerFactory
-import java.io.File
-import java.util.concurrent.CancellationException
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import java.io.File
 
+/**
+ * The "Project" home screen shown in the main panel.
+ *
+ * Offers Create Project / Clone Project shortcuts and a preview of the most
+ * recently opened projects (with a "More" link to the full list).
+ *
+ * @author Apex Studio Dev
+ */
 class MainFragment : BaseFragment() {
 
-  private val viewModel by activityViewModel<MainViewModel>()
-  private var binding: FragmentMainBinding? = null
+  private val mainViewModel by activityViewModel<MainViewModel>()
+  private val recentsViewModel by activityViewModels<RecentProjectsViewModel>()
 
-  companion object {
+  private var binding: FragmentProjectHomeBinding? = null
+  private var adapter: RecentProjectsAdapter? = null
 
-    private val log = LoggerFactory.getLogger(MainFragment::class.java)
-  }
-
-  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+  override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
     savedInstanceState: Bundle?
   ): View {
-    binding = FragmentMainBinding.inflate(inflater, container, false)
+    binding = FragmentProjectHomeBinding.inflate(inflater, container, false)
     return binding!!.root
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
+    val binding = binding ?: return
 
-    val actions = MainScreenAction.all().also { actions ->
-      val onClick = { action: MainScreenAction, _: View ->
-        when (action.id) {
-          MainScreenAction.ACTION_CREATE_PROJECT -> if (requireEnvSetup()) showCreateProject()
-          MainScreenAction.ACTION_OPEN_PROJECT -> if (requireEnvSetup()) showViewSavedProjects()
-          MainScreenAction.ACTION_CLONE_REPO -> if (requireEnvSetup()) showCloneRepository()
-          MainScreenAction.ACTION_DELETE_PROJECT -> pickDirectoryForDeletion()
-          MainScreenAction.ACTION_OPEN_TERMINAL -> if (requireSetup()) startActivity(
-            Intent(requireActivity(), TerminalActivity::class.java))
+    binding.recentProjectsPreview.layoutManager = LinearLayoutManager(requireContext())
+    binding.recentProjectsPreview.isNestedScrollingEnabled = false
 
-          MainScreenAction.ACTION_PREFERENCES -> gotoPreferences()
-          MainScreenAction.ACTION_DONATE -> BaseApplication.getBaseInstance().openDonationsPage()
-          MainScreenAction.ACTION_DOCS -> BaseApplication.getBaseInstance().openDocs()
-          MainScreenAction.ACTION_SDK_MANAGER -> startActivity(
-            Intent(requireActivity(), SdkManagerActivity::class.java))
-        }
-      }
-
-      actions.forEach { action ->
-        action.onClick = onClick
-
-        if (action.id == MainScreenAction.ACTION_OPEN_TERMINAL) {
-          action.onLongClick = { _: MainScreenAction, _: View ->
-            if (requireSetup()) {
-              val intent = Intent(requireActivity(), TerminalActivity::class.java).apply {
-                putExtra(TERMUX_ACTIVITY.EXTRA_FAILSAFE_SESSION, true)
-              }
-              startActivity(intent)
-              true
-            } else {
-              false
-            }
-          }
-        }
+    binding.btnCreateProject.setOnClickListener {
+      if (requireEnvSetup()) {
+        mainViewModel.setScreen(SCREEN_TEMPLATE_LIST)
       }
     }
 
-    binding!!.actions.adapter = MainActionsListAdapter(actions)
+    binding.btnCloneProject.setOnClickListener {
+      if (requireEnvSetup()) {
+        mainViewModel.setScreen(SCREEN_CLONE_REPO)
+      }
+    }
+
+    binding.btnShowAllRecent.setOnClickListener {
+      mainViewModel.setScreen(SCREEN_SAVED_PROJECTS)
+    }
+
+    observeRecents()
+    bootstrapFromFixedFolderIfNeeded()
+  }
+
+  override fun onResume() {
+    super.onResume()
+    recentsViewModel.loadProjects()
+  }
+
+  private fun observeRecents() {
+    recentsViewModel.projects.observe(viewLifecycleOwner) { projects ->
+      val binding = binding ?: return@observe
+      val preview = projects.take(3)
+
+      val currentAdapter = adapter ?: RecentProjectsAdapter(
+        preview,
+        onProjectClick = ::openProject,
+        onRemoveProjectClick = recentsViewModel::deleteProject,
+        onFileRenamed = recentsViewModel::updateProject,
+        onInfoClick = { project -> openProjectInfo(project) },
+        nameExists = recentsViewModel::projectNameExists
+      ).also {
+        adapter = it
+        binding.recentProjectsPreview.adapter = it
+      }
+      currentAdapter.updateProjects(preview)
+
+      binding.btnShowAllRecent.isVisible = projects.size > 3
+      binding.tvNoProjects.isVisible = projects.isEmpty()
+    }
+  }
+
+  private fun openProjectInfo(project: dev.apexstudio.ide.models.ProjectFile) {
+    viewLifecycleOwner.lifecycleScope.launch {
+      val recentProject = recentsViewModel.getProjectByName(project.name)
+      val sheet = dev.apexstudio.ide.ui.ProjectInfoBottomSheet.newInstance(project, recentProject)
+      sheet.show(parentFragmentManager, "project_info_sheet")
+    }
+  }
+
+  private fun bootstrapFromFixedFolderIfNeeded() {
+    if (recentsViewModel.didBootstrap) return
+    recentsViewModel.didBootstrap = true
+
+    viewLifecycleScope.launch(Dispatchers.IO) {
+      try {
+        val validProjects = findValidProjects(PROJECTS_DIR)
+        if (validProjects.isEmpty()) return@launch
+
+        val jobs = validProjects.map { dir ->
+          recentsViewModel.insertProjectFromFolder(dir.name, dir.absolutePath)
+        }
+        jobs.joinAll()
+        recentsViewModel.loadProjects().join()
+      } catch (e: Throwable) {
+        e.printStackTrace()
+      }
+    }
   }
 
   private fun requireSetup(): Boolean =
@@ -104,171 +155,12 @@ class MainFragment : BaseFragment() {
   private fun requireEnvSetup(): Boolean =
     (requireActivity() as MainActivity).requireEnvPackagesSetup()
 
-  override fun onDestroyView() {
-    super.onDestroyView()
-    binding = null
-  }
-
-  private fun pickDirectory() {
-    pickDirectory(this::openProject)
-  }
-  
-  private fun pickDirectoryForDeletion() {
-        viewModel.setScreen(MainViewModel.SCREEN_DELETE_PROJECTS)
-  }
-
-  private fun showCreateProject() {
-    viewModel.setScreen(MainViewModel.SCREEN_TEMPLATE_LIST)
-  }
-  
-  private fun showViewSavedProjects() {
-        viewModel.setScreen(MainViewModel.SCREEN_SAVED_PROJECTS)
-  }   
-
   fun openProject(root: File) {
     (requireActivity() as MainActivity).openProject(root)
   }
 
-  private fun cloneGitRepo() {
-    val builder = DialogUtils.newMaterialDialogBuilder(requireContext())
-    val binding = LayoutDialogTextInputBinding.inflate(layoutInflater)
-    binding.name.setHint(string.git_clone_repo_url)
-
-    builder.setView(binding.root)
-    builder.setTitle(string.git_clone_repo)
-    builder.setCancelable(true)
-    builder.setPositiveButton(string.git_clone) { dialog, _ ->
-      dialog.dismiss()
-      val url = binding.name.editText?.text?.toString()
-      doClone(url)
-    }
-    builder.setNegativeButton(android.R.string.cancel, null)
-    builder.show()
-  }
-
-  private fun doClone(repo: String?) {
-    if (repo.isNullOrBlank()) {
-      log.warn("Unable to clone repo. Invalid repo URL : {}'", repo)
-      return
-    }
-
-    var url = repo.trim()
-    if (!url.endsWith(".git")) {
-      url += ".git"
-    }
-
-    val builder = DialogUtils.newMaterialDialogBuilder(requireContext())
-    val binding = LayoutDialogProgressBinding.inflate(layoutInflater)
-
-    binding.message.visibility = View.VISIBLE
-
-    builder.setTitle(string.git_clone_in_progress)
-    builder.setMessage(url)
-    builder.setView(binding.root)
-    builder.setCancelable(false)
-
-    val repoName = url.substringAfterLast('/').substringBeforeLast(".git")
-    val targetDir = File(Environment.PROJECTS_DIR, repoName)
-
-    val progress = GitCloneProgressMonitor(binding.progress, binding.message)
-    val coroutineScope = (activity as? BaseIDEActivity?)?.activityScope ?: viewLifecycleScope
-
-    var getDialog: Function0<AlertDialog?>? = null
-
-    val cloneJob = coroutineScope.launch(Dispatchers.IO) {
-
-      val git = try {
-        Git.cloneRepository()
-          .setURI(url)
-          .setDirectory(targetDir)
-          .setProgressMonitor(progress)
-          .call()
-      } catch (err: Throwable) {
-        if (!progress.isCancelled) {
-          err.printStackTrace()
-          withContext(Dispatchers.Main) {
-            getDialog?.invoke()?.also { if (it.isShowing) it.dismiss() }
-            showCloneError(err)
-          }
-        }
-        null
-      }
-
-      try {
-        git?.close()
-      } finally {
-        val success = git != null
-        withContext(Dispatchers.Main) {
-          getDialog?.invoke()?.also { dialog ->
-            if (dialog.isShowing) dialog.dismiss()
-            if (success) flashSuccess(string.git_clone_success)
-          }
-        }
-      }
-    }
-
-    builder.setPositiveButton(android.R.string.cancel) { iface, _ ->
-      iface.dismiss()
-      progress.cancel()
-      cloneJob.cancel(CancellationException("Cancelled by user"))
-    }
-
-    val dialog = builder.show()
-    getDialog = { dialog }
-  }
-
-  private fun showCloneError(error: Throwable?) {
-    if (error == null) {
-      flashError(string.git_clone_failed)
-      return
-    }
-
-    val builder = DialogUtils.newMaterialDialogBuilder(requireContext())
-    builder.setTitle(string.git_clone_failed)
-    builder.setMessage(error.localizedMessage)
-    builder.setPositiveButton(android.R.string.ok, null)
-    builder.show()
-  }
-  
-  private fun showCloneRepository() {
-		viewModel.setScreen(MainViewModel.SCREEN_CLONE_REPO)
-  }
-
-  private fun gotoPreferences() {
-    startActivity(Intent(requireActivity(), PreferencesActivity::class.java))
-  }
-
-  // TODO(itsaky) : Improve this implementation
-  class GitCloneProgressMonitor(val progress: LinearProgressIndicator,
-    val message: TextView
-  ) : ProgressMonitor {
-
-    private var cancelled = false
-
-    fun cancel() {
-      cancelled = true
-    }
-
-    override fun start(totalTasks: Int) {
-      runOnUiThread { progress.max = totalTasks }
-    }
-
-    override fun beginTask(title: String?, totalWork: Int) {
-      runOnUiThread { message.text = title }
-    }
-
-    override fun update(completed: Int) {
-      runOnUiThread { progress.progress = completed }
-    }
-
-    override fun showDuration(enabled: Boolean) {
-      // no-op
-    }
-
-    override fun endTask() {}
-
-    override fun isCancelled(): Boolean {
-      return cancelled || Thread.currentThread().isInterrupted
-    }
+  override fun onDestroyView() {
+    super.onDestroyView()
+    binding = null
   }
 }

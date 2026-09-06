@@ -30,9 +30,13 @@ import androidx.transition.doOnEnd
 import com.google.android.material.transition.MaterialSharedAxis
 import dev.apexstudio.ide.R
 import dev.apexstudio.ide.activities.editor.EditorActivityKt
-import dev.apexstudio.ide.app.BaseApplication
 import dev.apexstudio.ide.app.EdgeToEdgeIDEActivity
 import dev.apexstudio.ide.databinding.ActivityMainBinding
+import dev.apexstudio.ide.fragments.AboutPanelFragment
+import dev.apexstudio.ide.fragments.IDEPreferencesFragment
+import dev.apexstudio.ide.fragments.SdkManagerFragment
+import dev.apexstudio.ide.preferences.IDEPreferences as prefs
+import dev.apexstudio.ide.preferences.addRootPreferences
 import dev.apexstudio.ide.preferences.internal.GeneralPreferences
 import dev.apexstudio.ide.projects.ProjectManagerImpl
 import dev.apexstudio.ide.resources.R.string
@@ -45,10 +49,13 @@ import dev.apexstudio.ide.utils.getCreatedTime
 import dev.apexstudio.ide.utils.getLastModifiedTime
 import dev.apexstudio.ide.utils.readProjectLanguage
 import dev.apexstudio.ide.viewmodel.MainViewModel
+import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_ABOUT
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_CLONE_REPO
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_DELETE_PROJECTS
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_MAIN
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_SAVED_PROJECTS
+import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_SDK_MANAGER
+import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_SETTINGS
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_TEMPLATE_DETAILS
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_TEMPLATE_LIST
 import com.termux.app.TermuxInstaller
@@ -63,6 +70,12 @@ class MainActivity : EdgeToEdgeIDEActivity() {
     private val viewModel by viewModel<MainViewModel>()
     private var _binding: ActivityMainBinding? = null
 
+    private var sdkManagerFragment: SdkManagerFragment? = null
+    private var lastNeedsInstall = true
+    private var settingsFragmentAdded = false
+    private var aboutFragmentAdded = false
+    private var syncingRail = false
+
     private val onBackPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
             viewModel.apply {
@@ -75,6 +88,14 @@ class MainActivity : EdgeToEdgeIDEActivity() {
                 val newScreen = when (currentScreen.value) {
                     SCREEN_TEMPLATE_DETAILS -> SCREEN_TEMPLATE_LIST
                     SCREEN_TEMPLATE_LIST -> SCREEN_MAIN
+                    SCREEN_SDK_MANAGER,
+                    SCREEN_SETTINGS,
+                    SCREEN_ABOUT,
+                    SCREEN_SAVED_PROJECTS,
+                    SCREEN_DELETE_PROJECTS,
+                    SCREEN_CLONE_REPO,
+                    -> SCREEN_MAIN
+
                     else -> SCREEN_MAIN
                 }
 
@@ -123,42 +144,121 @@ class MainActivity : EdgeToEdgeIDEActivity() {
         binding.btnSetupNow.setOnClickListener(onClick)
 
         setupSidebar()
+        setupSdkInstallButton()
     }
 
     private fun setupSidebar() {
-        binding.navView.getHeaderView(0)?.setOnClickListener {
-            if (viewModel.currentScreen.value != SCREEN_MAIN) {
-                viewModel.setScreen(SCREEN_MAIN)
+        binding.navRail.setOnItemSelectedListener { item ->
+            if (syncingRail) {
+                return@setOnItemSelectedListener false
             }
-        }
-
-        binding.navView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_create_project -> if (requireEnvPackagesSetup()) {
-                    viewModel.setScreen(SCREEN_TEMPLATE_LIST)
+                R.id.nav_project -> if (viewModel.currentScreen.value != SCREEN_MAIN) {
+                    viewModel.setScreen(SCREEN_MAIN)
                 }
 
-                R.id.nav_recent_projects -> if (requireEnvPackagesSetup()) {
-                    viewModel.setScreen(SCREEN_SAVED_PROJECTS)
-                }
-
-                R.id.nav_clone_repo -> if (requireEnvPackagesSetup()) {
-                    viewModel.setScreen(SCREEN_CLONE_REPO)
+                R.id.nav_sdk -> viewModel.setScreen(SCREEN_SDK_MANAGER)
+                R.id.nav_settings -> viewModel.setScreen(SCREEN_SETTINGS)
+                R.id.nav_about -> {
+                    if (!aboutFragmentAdded) {
+                        embedAboutPanel()
+                    }
+                    viewModel.setScreen(SCREEN_ABOUT)
                 }
 
                 R.id.nav_terminal -> if (requireBootstrapSetup()) {
                     startActivity(Intent(this, TerminalActivity::class.java))
                 }
-
-                R.id.nav_sdk_manager -> startActivity(Intent(this, SdkManagerActivity::class.java))
-                R.id.nav_preferences -> startActivity(Intent(this, PreferencesActivity::class.java))
-                R.id.nav_about -> startActivity(Intent(this, AboutActivity::class.java))
-                R.id.nav_contributors -> startActivity(Intent(this, ContributorsActivity::class.java))
-                R.id.nav_donate -> BaseApplication.getBaseInstance().openDonationsPage()
-                R.id.nav_docs -> BaseApplication.getBaseInstance().openDocs()
             }
             true
         }
+    }
+
+    private fun setupSdkInstallButton() {
+        binding.btnSdkInstall.setOnClickListener {
+            val fragment = sdkManagerFragment ?: return@setOnClickListener
+            if (fragment.isInstalling) {
+                return@setOnClickListener
+            }
+            binding.btnSdkInstall.isEnabled = false
+            fragment.installToolchain(fragment.onComplete!!)
+        }
+    }
+
+    private fun embedSdkManagerPanel() {
+        if (sdkManagerFragment != null && sdkManagerFragment!!.isAdded) {
+            return
+        }
+        val fragment = SdkManagerFragment.newInstance().also {
+            sdkManagerFragment = it
+        }
+        supportFragmentManager.beginTransaction()
+            .replace(binding.sdkFragmentContainer.id, fragment, SDK_MANAGER_FRAGMENT_TAG)
+            .commit()
+
+        fragment.onComplete = {
+            runOnUiThread {
+                if (isFinishing || isDestroyed) {
+                    return@runOnUiThread
+                }
+                binding.btnSdkInstall.isEnabled = true
+                refreshInstallButton(notify = false)
+                flashSuccess(R.string.msg_sdk_manager_installed)
+            }
+        }
+        fragment.onStateChanged = {
+            runOnUiThread {
+                if (isFinishing || isDestroyed) {
+                    return@runOnUiThread
+                }
+                refreshInstallButton(notify = true)
+            }
+        }
+        binding.btnSdkInstall.post {
+            refreshInstallButton(notify = true)
+        }
+    }
+
+    private fun refreshInstallButton(notify: Boolean) {
+        val fragment = sdkManagerFragment ?: return
+        val needsInstall = fragment.needsInstall()
+        binding.btnSdkInstall.visibility = if (needsInstall) View.VISIBLE else View.GONE
+        val changed = needsInstall != lastNeedsInstall
+        lastNeedsInstall = needsInstall
+        if (notify && !needsInstall && changed) {
+            flashInfo(R.string.msg_sdk_manager_up_to_date)
+        }
+    }
+
+    private fun embedSettingsPanel() {
+        if (settingsFragmentAdded) {
+            return
+        }
+        settingsFragmentAdded = true
+        (prefs.children as MutableList?)?.clear()
+        prefs.addRootPreferences()
+
+        val fragment = IDEPreferencesFragment().apply {
+            arguments = Bundle().apply {
+                putParcelableArrayList(
+                    IDEPreferencesFragment.EXTRA_CHILDREN,
+                    ArrayList(prefs.children),
+                )
+            }
+        }
+        supportFragmentManager.beginTransaction()
+            .replace(binding.settingsFragmentContainer.id, fragment)
+            .commit()
+    }
+
+    private fun embedAboutPanel() {
+        if (aboutFragmentAdded) {
+            return
+        }
+        aboutFragmentAdded = true
+        supportFragmentManager.beginTransaction()
+            .replace(binding.aboutPanel.id, AboutPanelFragment())
+            .commit()
     }
 
     override fun onResume() {
@@ -258,6 +358,14 @@ private fun launchIdeSetup() {
             TransitionManager.beginDelayedTransition(binding.root, transition)
         }
 
+        when (screen) {
+            SCREEN_SDK_MANAGER -> embedSdkManagerPanel()
+            SCREEN_SETTINGS -> embedSettingsPanel()
+            SCREEN_ABOUT -> if (!aboutFragmentAdded) {
+                embedAboutPanel()
+            }
+        }
+
         val currentFragment = when (screen) {
             SCREEN_MAIN -> binding.main
             SCREEN_TEMPLATE_LIST -> binding.templateList
@@ -265,18 +373,50 @@ private fun launchIdeSetup() {
             SCREEN_SAVED_PROJECTS -> binding.savedProjectsView
             SCREEN_DELETE_PROJECTS -> binding.deleteProjectsView
             SCREEN_CLONE_REPO -> binding.cloneRepositoryView
+            SCREEN_SDK_MANAGER -> binding.sdkManagerPanel
+            SCREEN_SETTINGS -> binding.settingsPanel
+            SCREEN_ABOUT -> binding.aboutPanel
             else -> throw IllegalArgumentException("Invalid screen id: '$screen'")
         }
 
-        for (fragment in arrayOf(
+        for (view in arrayOf(
             binding.main,
             binding.templateList,
             binding.templateDetails,
             binding.savedProjectsView,
             binding.deleteProjectsView,
-            binding.cloneRepositoryView
+            binding.cloneRepositoryView,
+            binding.sdkManagerPanel,
+            binding.settingsPanel,
+            binding.aboutPanel
         )) {
-            fragment.isVisible = fragment == currentFragment
+            view.isVisible = view == currentFragment
+        }
+
+        syncRailSelection(screen)
+        syncToolbarTitle(screen)
+    }
+
+    private fun syncRailSelection(screen: Int?) {
+        val itemId = when (screen) {
+            SCREEN_MAIN -> R.id.nav_project
+            SCREEN_SDK_MANAGER -> R.id.nav_sdk
+            SCREEN_SETTINGS -> R.id.nav_settings
+            SCREEN_ABOUT -> R.id.nav_about
+            else -> R.id.nav_project
+        }
+        syncingRail = true
+        binding.navRail.selectedItemId = itemId
+        syncingRail = false
+    }
+
+    private fun syncToolbarTitle(screen: Int?) {
+        binding.toolbar.title = when (screen) {
+            SCREEN_MAIN -> getString(R.string.section_project)
+            SCREEN_SDK_MANAGER -> getString(R.string.title_sdk_manager)
+            SCREEN_SETTINGS -> getString(R.string.ide_preferences)
+            SCREEN_ABOUT -> getString(R.string.about)
+            else -> getString(R.string.app_name)
         }
     }
 
@@ -381,5 +521,9 @@ private fun launchIdeSetup() {
         ITemplateProvider.getInstance().release()
         super.onDestroy()
         _binding = null
+    }
+
+    companion object {
+        private const val SDK_MANAGER_FRAGMENT_TAG = "ide.sdk.manager.fragment"
     }
 }

@@ -10,20 +10,19 @@
 
   <LinearLayout
     android:id="@+id/sidebar"
-    android:layout_width="264dp"
+    android:layout_width="0dp"
     android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:minWidth="72dp"
     android:background="?attr/colorSurfaceContainerLow"
     android:orientation="vertical">
 
-    <com.google.android.material.navigation.NavigationView
-      android:id="@+id/nav_view"
+    <com.google.android.material.navigationrail.NavigationRailView
+      android:id="@+id/nav_rail"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:background="?attr/colorSurfaceContainerLow"
-      app:headerLayout="@layout/header_drawer"
-      app:itemIconTint="?attr/colorOnSurfaceVariant"
-      app:itemTextColor="?attr/colorOnSurface"
-      app:menu="@menu/sidebar_menu" />
+      app:menu="@menu/main_sidebar_menu" />
 
   </LinearLayout>
 
@@ -35,7 +34,7 @@
   <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="0dp"
     android:layout_height="match_parent"
-    android:layout_weight="1"
+    android:layout_weight="7"
     android:animateLayoutChanges="true"
     android:orientation="vertical">
 
@@ -53,7 +52,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        app:title="@string/app_name"
+        app:title="@string/section_project"
         app:titleTextAppearance="@style/TextAppearance.AndroidIDE.TitleLarge.Bold"
         app:titleCentered="true" />
 
@@ -171,6 +170,51 @@
         android:name="dev.apexstudio.ide.fragments.DeleteProjectFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+      <LinearLayout
+        android:id="@+id/sdk_manager_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <FrameLayout
+          android:id="@+id/sdk_fragment_container"
+          android:layout_width="match_parent"
+          android:layout_height="0dp"
+          android:layout_weight="1" />
+
+        <com.google.android.material.button.MaterialButton
+          android:id="@+id/btn_sdk_install"
+          style="@style/Widget.Material3.Button"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_marginStart="12dp"
+          android:layout_marginTop="4dp"
+          android:layout_marginEnd="12dp"
+          android:layout_marginBottom="12dp"
+          android:text="@string/action_install" />
+
+      </LinearLayout>
+
+      <FrameLayout
+        android:id="@+id/settings_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <FrameLayout
+          android:id="@+id/settings_fragment_container"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent" />
+
+      </FrameLayout>
+
+      <FrameLayout
+        android:id="@+id/about_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
     </FrameLayout>
 
