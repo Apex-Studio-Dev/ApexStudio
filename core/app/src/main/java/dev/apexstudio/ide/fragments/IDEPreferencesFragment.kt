@@ -24,7 +24,6 @@ import android.view.ViewGroup
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceGroup
 import com.google.android.material.transition.MaterialSharedAxis
-import dev.apexstudio.ide.R
 import dev.apexstudio.ide.preferences.IPreference
 import dev.apexstudio.ide.preferences.IPreferenceGroup
 import dev.apexstudio.ide.preferences.IPreferenceScreen
@@ -59,11 +58,6 @@ class IDEPreferencesFragment : BasePreferenceFragment() {
   }
 
   private fun addChildren(children: List<IPreference>, pref: PreferenceGroup) {
-    // Card-style rows at this level are every preference except category headers.
-    // All rows of a category are grouped into a single card: the first row rounds
-    // the top corners, middle rows stay square and the last one rounds the bottom.
-    val cards = children.filter { it !is IPreferenceGroup || it is IPreferenceScreen }
-
     for (child in children) {
       val preference = child.onCreateView(requireContext())
       if (child is IPreferenceScreen) {
@@ -73,19 +67,9 @@ class IDEPreferencesFragment : BasePreferenceFragment() {
         pref.addPreference(preference as PreferenceCategory)
         addChildren(child.children, preference)
         continue
-      } else if (preference is androidx.preference.SwitchPreference) {
-        // Make sure an inline switch is always rendered for switch preferences.
-        preference.widgetLayoutResource = R.layout.preference_widget_materialswitch
       }
-
-      val index = cards.indexOf(child)
-      preference.layoutResource =
-        when {
-          cards.size == 1 -> R.layout.layout_preference_card
-          index == 0 -> R.layout.layout_preference_card_top
-          index == cards.lastIndex -> R.layout.layout_preference_card_bottom
-          else -> R.layout.layout_preference_card_middle
-        }
+      // Default androidx rendering (no custom card layouts); SwitchPreference
+      // uses its built-in switch widget.
       pref.addPreference(preference)
     }
   }
