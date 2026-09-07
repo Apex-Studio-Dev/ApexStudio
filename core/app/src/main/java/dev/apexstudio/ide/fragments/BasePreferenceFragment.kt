@@ -18,10 +18,18 @@
 package dev.apexstudio.ide.fragments
 
 import android.os.Bundle
+import android.view.View
 import androidx.preference.PreferenceFragmentCompat
 import dev.apexstudio.ide.R.xml
 
 abstract class BasePreferenceFragment : PreferenceFragmentCompat() {
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+    // Preferences are rendered as cards (see layout_preference_card.xml); the
+    // spacing between cards acts as the divider, so drop the row divider lines.
+    setDividerHeight(0)
+  }
 
   override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
     setPreferencesFromResource(xml.ide_prefs, rootKey)

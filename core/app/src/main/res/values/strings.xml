@@ -17,7 +17,7 @@
 
 <resources>
   <!--  Required by F-Droid-->
-  <string name="app_name" translatable="false">ApexStudio</string>
+  <string name="app_name" translatable="false">Apex Studio</string>
   <string name="title_setup_not_completed">Setup not completed</string>
   <string name="msg_setup_not_completed">Set up the environment to build and run projects on this device.</string>
   <string name="action_setup">Setup</string>

@@ -24,6 +24,7 @@ import android.view.ViewGroup
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceGroup
 import com.google.android.material.transition.MaterialSharedAxis
+import dev.apexstudio.ide.R
 import dev.apexstudio.ide.preferences.IPreference
 import dev.apexstudio.ide.preferences.IPreferenceGroup
 import dev.apexstudio.ide.preferences.IPreferenceScreen
@@ -61,6 +62,7 @@ class IDEPreferencesFragment : BasePreferenceFragment() {
     for (child in children) {
       val preference = child.onCreateView(requireContext())
       if (child is IPreferenceScreen) {
+        preference.layoutResource = R.layout.layout_preference_card
         preference.fragment = IDEPreferencesFragment::class.java.name
         preference.extras.putParcelableArrayList(EXTRA_CHILDREN, ArrayList(child.children))
         pref.addPreference(preference)
@@ -73,6 +75,7 @@ class IDEPreferencesFragment : BasePreferenceFragment() {
         continue
       }
 
+      preference.layoutResource = R.layout.layout_preference_card
       pref.addPreference(preference)
     }
   }

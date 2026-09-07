@@ -31,6 +31,7 @@ import com.google.android.material.transition.MaterialSharedAxis
 import dev.apexstudio.ide.R
 import dev.apexstudio.ide.activities.editor.EditorActivityKt
 import dev.apexstudio.ide.app.EdgeToEdgeIDEActivity
+import dev.apexstudio.ide.buildinfo.BuildInfo
 import dev.apexstudio.ide.databinding.ActivityMainBinding
 import dev.apexstudio.ide.fragments.AboutPanelFragment
 import dev.apexstudio.ide.fragments.IDEPreferencesFragment
@@ -145,6 +146,7 @@ class MainActivity : EdgeToEdgeIDEActivity() {
     }
 
     private fun setupSidebar() {
+        binding.sidebarVersion.text = getString(R.string.sidebar_version, BuildInfo.VERSION_NAME_SIMPLE)
         binding.navProject.setOnClickListener {
             if (viewModel.currentScreen.value != SCREEN_MAIN) {
                 viewModel.setScreen(SCREEN_MAIN)
@@ -269,11 +271,11 @@ class MainActivity : EdgeToEdgeIDEActivity() {
             .commit()
     }
 
-internal fun launchIdeSetup() {
+  private fun launchIdeSetup() {
     startActivity(Intent(this, SetupActivity::class.java))
   }
 
-  internal fun launchSdkManager() {
+  private fun launchSdkManager() {
     startActivity(Intent(this, SdkManagerActivity::class.java))
   }
 

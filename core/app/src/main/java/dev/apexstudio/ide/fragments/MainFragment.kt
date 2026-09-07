@@ -38,6 +38,7 @@ import dev.apexstudio.ide.utils.viewLifecycleScope
 import dev.apexstudio.ide.viewmodel.MainViewModel
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_CLONE_REPO
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_SAVED_PROJECTS
+import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_SDK_MANAGER
 import dev.apexstudio.ide.viewmodel.MainViewModel.Companion.SCREEN_TEMPLATE_LIST
 import dev.apexstudio.ide.viewmodel.RecentProjectsViewModel
 import kotlinx.coroutines.Dispatchers
@@ -101,16 +102,12 @@ class MainFragment : BaseFragment() {
       }
     }
 
-    val onBannerClick = {
-      val activity = requireActivity() as MainActivity
-      if (TermuxInstaller.isBootstrapInstalled()) {
-        activity.launchSdkManager()
-      } else {
-        activity.launchIdeSetup()
-      }
+    binding.setupBanner.setOnClickListener {
+      mainViewModel.setScreen(SCREEN_SDK_MANAGER)
     }
-    binding.setupBanner.setOnClickListener { onBannerClick() }
-    binding.btnSetupNow.setOnClickListener { onBannerClick() }
+    binding.btnSetupNow.setOnClickListener {
+      mainViewModel.setScreen(SCREEN_SDK_MANAGER)
+    }
 
     observeRecents()
     bootstrapFromFixedFolderIfNeeded()
