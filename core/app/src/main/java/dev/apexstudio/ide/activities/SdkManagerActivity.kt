@@ -101,6 +101,7 @@ class SdkManagerActivity : EdgeToEdgeIDEActivity() {
   private fun refreshInstallButton(notify: Boolean) {
     val needsInstall = sdkManagerFragment.needsInstall()
     binding.btnSdkInstall.visibility = if (needsInstall) View.VISIBLE else View.GONE
+    binding.btnSdkInstall.isEnabled = !sdkManagerFragment.isInstalling
     val changed = needsInstall != lastNeedsInstall
     lastNeedsInstall = needsInstall
     if (notify && !needsInstall && changed) {

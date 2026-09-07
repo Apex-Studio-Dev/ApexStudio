@@ -233,6 +233,7 @@ class MainActivity : EdgeToEdgeIDEActivity() {
         val fragment = sdkManagerFragment ?: return
         val needsInstall = fragment.needsInstall()
         binding.btnSdkInstall.visibility = if (needsInstall) View.VISIBLE else View.GONE
+        binding.btnSdkInstall.isEnabled = !fragment.isInstalling
         val changed = needsInstall != lastNeedsInstall
         lastNeedsInstall = needsInstall
         if (notify && !needsInstall && changed) {

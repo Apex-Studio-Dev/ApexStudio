@@ -353,6 +353,7 @@
     <string name="msg_delete_project">Are you sure want to remove the project?</string>
     <string name="msg_current_name_unavailable">Current name is unavailable!</string>
     <string name="cancel">Cancel</string>
+    <string name="hide">Hide</string>
     <string name="msg_cannnot_empty">Field cannot be empty!</string>
     <string name="project_directory_invalid">%s is not a valid Android project folder. Please open another folder instead.</string>
     <string name="msg_cannot_access_folder">Cannot access folder %1$s. Check storage permissions.</string>

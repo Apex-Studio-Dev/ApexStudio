@@ -7,14 +7,13 @@
   android:layout_marginStart="16dp"
   android:layout_marginTop="6dp"
   android:layout_marginEnd="16dp"
-  android:layout_marginBottom="6dp"
   android:clickable="true"
   android:focusable="true"
   app:cardBackgroundColor="?attr/colorSurfaceContainerHigh"
   app:cardCornerRadius="16dp"
   app:cardElevation="0dp"
   app:rippleColor="?attr/colorPrimary"
-  app:shapeAppearanceOverlay="@style/AppTheme.ShapeAppearance.PrefCardSingle">
+  app:shapeAppearanceOverlay="@style/AppTheme.ShapeAppearance.PrefCardTop">
 
   <include layout="@layout/layout_preference_card_content" />
 

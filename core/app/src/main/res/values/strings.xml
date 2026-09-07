@@ -59,6 +59,7 @@
   <string name="msg_sdk_manager_installing">Installing the selected components... This may take a while.</string>
   <string name="msg_sdk_manager_installed">SDK components installed.</string>
   <string name="msg_sdk_manager_up_to_date">SDK components are already installed.</string>
+  <string name="msg_sdk_manager_install_in_progress">Installation in progress — tap to view</string>
   <string name="msg_setup_toolchain_failed">Toolchain install failed (exit code %1$d). Retry when ready; Continue stays disabled until it succeeds.</string>
   <string name="msg_setup_toolchain_error">Unexpected error: %1$s</string>
 

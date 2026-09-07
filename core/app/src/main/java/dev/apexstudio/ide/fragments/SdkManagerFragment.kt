@@ -17,6 +17,7 @@
 package dev.apexstudio.ide.fragments
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -45,10 +46,12 @@ import com.blankj.utilcode.util.ResourceUtils
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.termux.app.TermuxInstaller
 import dev.apexstudio.ide.R
 import dev.apexstudio.ide.databinding.LayoutIdeSdkManagerBinding
+import dev.apexstudio.ide.databinding.LayoutSdkInstallDialogBinding
 import dev.apexstudio.ide.resources.R.string
 import dev.apexstudio.ide.utils.ConnectionInfo
 import dev.apexstudio.ide.utils.Environment
@@ -86,6 +89,21 @@ class SdkManagerFragment : Fragment() {
 
   @Volatile
   private var installingToolchain = false
+
+  @Volatile
+  private var installProcess: Process? = null
+
+  private var installDialog: Dialog? = null
+  private var installDialogBinding: LayoutSdkInstallDialogBinding? = null
+
+  private var retryAction: (() -> Unit)? = null
+
+  /**
+   * Set to true when the user hides the install dialog. While hidden, output is
+   * still accumulated; the dialog is re-shown on success/failure so the result
+   * (and the retry action on failure) is never missed.
+   */
+  private var installDialogHidden = false
 
   /**
    * Called (on the main thread) when the toolchain installation completes successfully.
@@ -203,88 +221,18 @@ class SdkManagerFragment : Fragment() {
   }
 
   fun installToolchain(onComplete: () -> Unit) {
-    if (installingToolchain) {
-      return
-    }
-
-    if (!TermuxInstaller.isBootstrapInstalled()) {
-      flashError(R.string.msg_setup_bootstrap_wait)
-      return
-    }
-
-    installingToolchain = true
-    content.tvInstallStatus.text = getString(R.string.msg_sdk_manager_installing)
-    content.tvInstallStatus.isVisible = true
-    setUiEnabled(false)
-
-    Thread {
-      try {
-        val scriptDir = File(Environment.PREFIX, "etc/apexstudio")
-        scriptDir.mkdirs()
-        val script = File(scriptDir, "install-toolchain.sh")
-        val manifest = File(scriptDir, "toolchain-manifest.json")
-        val scriptOk = ResourceUtils.copyFileFromAssets(
-          "data/common/install-toolchain.sh", script.absolutePath)
-        val manifestOk = ResourceUtils.copyFileFromAssets(
-          "data/common/toolchain-manifest.json", manifest.absolutePath)
-        if (!scriptOk || !manifestOk) {
-          throw IllegalStateException("asset copy failed (script=$scriptOk, manifest=$manifestOk)")
-        }
-        script.setExecutable(true)
-
-        val args = buildToolchainArgs()
-
-        val env = HashMap<String, String>()
-        Environment.putEnvironment(env, false)
-        env["PREFIX"] = Environment.PREFIX.absolutePath
-        env["TMPDIR"] = Environment.TMP_DIR.absolutePath
-        env["ANDROID_HOME"] = Environment.ANDROID_HOME.absolutePath
-        env["PATH"] = Environment.BIN_DIR.absolutePath + ":" + System.getenv("PATH")
-
-        val process = ProcessBuilder(
-          Environment.BASH_SHELL.absolutePath,
-          script.absolutePath,
-          *args
-        ).redirectErrorStream(true)
-          .apply { environment().putAll(env) }
-          .start()
-
-        process.inputStream.bufferedReader().forEachLine { line ->
-          requireActivity().runOnUiThread {
-            if (isAdded) {
-              appendInstallLine(line)
-            }
-          }
-        }
-        val code = process.waitFor()
-        requireActivity().runOnUiThread {
-          if (code == 0) {
-            refreshComponentLists()
-            onComplete()
-          } else {
-            appendInstallLine(getString(R.string.msg_setup_toolchain_failed, code))
-          }
-        }
-      } catch (e: Exception) {
-        requireActivity().runOnUiThread {
-          if (isAdded) {
-            appendInstallLine(getString(R.string.msg_setup_toolchain_error, e.message))
-          }
-        }
-      } finally {
-        requireActivity().runOnUiThread {
-          if (isAdded) {
-            installingToolchain = false
-            setUiEnabled(true)
-          } else {
-            installingToolchain = false
-          }
-        }
-      }
-    }.apply {
-      isDaemon = true
-      start()
-    }
+    runScriptOperation(
+      statusMessage = getString(R.string.msg_sdk_manager_installing),
+      showRetryInitially = false,
+      assetName = "install-toolchain.sh",
+      buildArgs = { buildToolchainArgs() },
+      failureLine = { getString(R.string.msg_setup_toolchain_failed, it) },
+      onSuccess = {
+        refreshComponentLists()
+        onComplete()
+      },
+      onRetry = { installToolchain(onComplete) }
+    )
   }
 
   private fun buildToolchainArgs(): Array<String> {
@@ -378,6 +326,36 @@ class SdkManagerFragment : Fragment() {
   }
 
   private fun uninstallComponent(typeToken: String, value: String) {
+    runScriptOperation(
+      statusMessage =
+        getString(R.string.msg_sdk_manager_uninstalling, labelOf(typeToken, value)),
+      showRetryInitially = false,
+      assetName = "uninstall-toolchain.sh",
+      buildArgs = { arrayOf("--$typeToken", value) },
+      failureLine = { getString(R.string.msg_sdk_manager_uninstall_failed, it) },
+      onSuccess = {
+        when (typeToken) {
+          "platform" -> selectedPlatforms -= value
+          "build-tools" -> selectedBuildTools -= value
+          "ndk" -> selectedNdkVersions -= value
+          "cmake" -> selectedCmakeVersions -= value
+        }
+        refreshComponentLists()
+        flashSuccess(R.string.msg_sdk_manager_uninstalled)
+      },
+      onRetry = { uninstallComponent(typeToken, value) }
+    )
+  }
+
+  private fun runScriptOperation(
+    statusMessage: String,
+    showRetryInitially: Boolean,
+    assetName: String,
+    buildArgs: () -> Array<String>,
+    failureLine: (Int) -> String,
+    onSuccess: () -> Unit,
+    onRetry: () -> Unit
+  ) {
     if (installingToolchain) {
       return
     }
@@ -388,21 +366,33 @@ class SdkManagerFragment : Fragment() {
     }
 
     installingToolchain = true
+    installDialogHidden = false
+    retryAction = onRetry
     setUiEnabled(false)
-    content.tvInstallStatus.text =
-      getString(R.string.msg_sdk_manager_uninstalling, labelOf(typeToken, value)) + "\n"
-    content.tvInstallStatus.isVisible = true
+    showInstallDialog(statusMessage, showRetryInitially)
 
     Thread {
       try {
         val scriptDir = File(Environment.PREFIX, "etc/apexstudio")
         scriptDir.mkdirs()
-        val script = File(scriptDir, "uninstall-toolchain.sh")
-        if (!ResourceUtils.copyFileFromAssets(
-            "data/common/uninstall-toolchain.sh", script.absolutePath)) {
-          throw IllegalStateException("asset copy failed: install-toolchain.sh")
+        val script = File(scriptDir, assetName)
+        val ok = when (assetName) {
+          "install-toolchain.sh" -> {
+            val manifest = File(scriptDir, "toolchain-manifest.json")
+            val scriptCopy = ResourceUtils.copyFileFromAssets(
+              "data/common/$assetName", script.absolutePath)
+            val manifestCopy = ResourceUtils.copyFileFromAssets(
+              "data/common/toolchain-manifest.json", manifest.absolutePath)
+            scriptCopy && manifestCopy
+          }
+          else -> ResourceUtils.copyFileFromAssets("data/common/$assetName", script.absolutePath)
+        }
+        if (!ok) {
+          throw IllegalStateException("asset copy failed: $assetName")
         }
         script.setExecutable(true)
+
+        val args = buildArgs()
 
         val env = HashMap<String, String>()
         Environment.putEnvironment(env, false)
@@ -414,10 +404,11 @@ class SdkManagerFragment : Fragment() {
         val process = ProcessBuilder(
           Environment.BASH_SHELL.absolutePath,
           script.absolutePath,
-          "--$typeToken", value
+          *args
         ).redirectErrorStream(true)
           .apply { environment().putAll(env) }
           .start()
+        installProcess = process
 
         process.inputStream.bufferedReader().forEachLine { line ->
           requireActivity().runOnUiThread {
@@ -430,16 +421,12 @@ class SdkManagerFragment : Fragment() {
         requireActivity().runOnUiThread {
           if (isAdded) {
             if (code == 0) {
-              when (typeToken) {
-                "platform" -> selectedPlatforms -= value
-                "build-tools" -> selectedBuildTools -= value
-                "ndk" -> selectedNdkVersions -= value
-                "cmake" -> selectedCmakeVersions -= value
-              }
-              refreshComponentLists()
-              flashSuccess(R.string.msg_sdk_manager_uninstalled)
+              hideResumeBanner()
+              dismissInstallDialog()
+              onSuccess()
             } else {
-              appendInstallLine(getString(R.string.msg_sdk_manager_uninstall_failed, code))
+              appendInstallLine(failureLine(code))
+              showInstallError(failureLine(code))
             }
           }
         }
@@ -447,13 +434,19 @@ class SdkManagerFragment : Fragment() {
         requireActivity().runOnUiThread {
           if (isAdded) {
             appendInstallLine(getString(R.string.msg_setup_toolchain_error, e.message))
+            showInstallError(getString(R.string.msg_setup_toolchain_error, e.message))
           }
         }
       } finally {
         requireActivity().runOnUiThread {
-          installingToolchain = false
           if (isAdded) {
+            installingToolchain = false
+            installProcess = null
             setUiEnabled(true)
+            onStateChanged?.invoke()
+          } else {
+            installingToolchain = false
+            installProcess = null
           }
         }
       }
@@ -461,6 +454,87 @@ class SdkManagerFragment : Fragment() {
       isDaemon = true
       start()
     }
+  }
+
+  private fun showInstallDialog(message: String, showRetry: Boolean) {
+    installDialog?.dismiss()
+    val binding = LayoutSdkInstallDialogBinding.inflate(
+      LayoutInflater.from(requireContext()), null, false)
+    installDialogBinding = binding
+    binding.txtStatus.text = message
+    binding.btnRetry.isVisible = showRetry
+    binding.progress.isVisible = !showRetry
+    hideResumeBanner()
+
+    val dialog = MaterialAlertDialogBuilder(requireContext())
+      .setView(binding.root)
+      .setCancelable(false)
+      .create()
+    installDialog = dialog
+
+    binding.btnHide.setOnClickListener {
+      installDialogHidden = true
+      dialog.dismiss()
+      showResumeBanner()
+    }
+
+    binding.btnCancel.setOnClickListener {
+      installProcess?.destroy()
+      dialog.dismiss()
+      installDialog = null
+      installDialogBinding = null
+      onStateChanged?.invoke()
+    }
+
+    binding.btnRetry.setOnClickListener {
+      dialog.dismiss()
+      installDialog = null
+      installDialogBinding = null
+      retryAction?.invoke()
+      retryAction = null
+    }
+
+    dialog.show()
+  }
+
+  private fun showInstallError(errorMessage: String) {
+    val binding = installDialogBinding ?: return
+    binding.txtStatus.text = errorMessage
+    binding.btnRetry.isVisible = true
+    binding.progress.isVisible = false
+    if (installDialogHidden) {
+      // The dialog was hidden while running; show it again so the user can retry.
+      installDialogHidden = false
+      installDialog?.show()
+      hideResumeBanner()
+    }
+  }
+
+  private fun showResumeBanner() {
+    val contentView = _content ?: return
+    contentView.tvInstallStatus?.let {
+      it.text = getString(R.string.msg_sdk_manager_install_in_progress)
+      it.isVisible = true
+      it.isClickable = true
+      it.setOnClickListener {
+        installDialogHidden = false
+        installDialog?.show()
+        hideResumeBanner()
+      }
+    }
+  }
+
+  private fun hideResumeBanner() {
+    _content?.tvInstallStatus?.let {
+      it.isVisible = false
+      it.setOnClickListener(null)
+    }
+  }
+
+  private fun dismissInstallDialog() {
+    installDialog?.dismiss()
+    installDialog = null
+    installDialogBinding = null
   }
 
   private fun labelOf(typeToken: String, value: String): String {
@@ -495,8 +569,9 @@ class SdkManagerFragment : Fragment() {
   }
 
   private fun appendInstallLine(line: String) {
-    val currentText = content.tvInstallStatus.text?.toString().orEmpty()
-    content.tvInstallStatus.text =
+    val log = installDialogBinding?.txtLog ?: return
+    val currentText = log.text?.toString().orEmpty()
+    log.text =
       currentText + if (currentText.endsWith("\n") || currentText.isEmpty()) {
         line
       } else {
@@ -598,6 +673,7 @@ class SdkManagerFragment : Fragment() {
     super.onDestroyView()
     backgroundDataRestrictionReceiver = null
     networkStateChangeCallback = null
+    dismissInstallDialog()
     _content = null
   }
 

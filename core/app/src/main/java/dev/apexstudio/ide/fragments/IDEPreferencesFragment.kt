@@ -59,23 +59,33 @@ class IDEPreferencesFragment : BasePreferenceFragment() {
   }
 
   private fun addChildren(children: List<IPreference>, pref: PreferenceGroup) {
+    // Card-style rows at this level are every preference except category headers.
+    // All rows of a category are grouped into a single card: the first row rounds
+    // the top corners, middle rows stay square and the last one rounds the bottom.
+    val cards = children.filter { it !is IPreferenceGroup || it is IPreferenceScreen }
+
     for (child in children) {
       val preference = child.onCreateView(requireContext())
       if (child is IPreferenceScreen) {
-        preference.layoutResource = R.layout.layout_preference_card
         preference.fragment = IDEPreferencesFragment::class.java.name
         preference.extras.putParcelableArrayList(EXTRA_CHILDREN, ArrayList(child.children))
-        pref.addPreference(preference)
-        continue
-      }
-
-      if (child is IPreferenceGroup) {
+      } else if (child is IPreferenceGroup) {
         pref.addPreference(preference as PreferenceCategory)
         addChildren(child.children, preference)
         continue
+      } else if (preference is androidx.preference.SwitchPreference) {
+        // Make sure an inline switch is always rendered for switch preferences.
+        preference.widgetLayoutResource = R.layout.preference_widget_materialswitch
       }
 
-      preference.layoutResource = R.layout.layout_preference_card
+      val index = cards.indexOf(child)
+      preference.layoutResource =
+        when {
+          cards.size == 1 -> R.layout.layout_preference_card
+          index == 0 -> R.layout.layout_preference_card_top
+          index == cards.lastIndex -> R.layout.layout_preference_card_bottom
+          else -> R.layout.layout_preference_card_middle
+        }
       pref.addPreference(preference)
     }
   }
