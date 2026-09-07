@@ -165,7 +165,7 @@ public class ReportActivity extends BaseIDEActivity {
         if (mReportInfo.reportTitle != null) {
             actionBar.setTitle(mReportInfo.reportTitle);
         } else {
-            actionBar.setTitle(TermuxConstants.TERMUX_APP_NAME + " App Report");
+            actionBar.setTitle(TermuxConstants.TERMUX_APP_DISPLAY_NAME + " App Report");
         }
     }
 

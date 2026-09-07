@@ -295,7 +295,7 @@ public final class TermuxInstaller {
     }
 
     private static void sendBootstrapCrashReportNotification(Activity activity, String message) {
-        final String title = TermuxConstants.TERMUX_APP_NAME + " Bootstrap Error";
+        final String title = TermuxConstants.TERMUX_APP_DISPLAY_NAME + " Bootstrap Error";
 
         // Add info of all install Termux plugin apps as well since their target sdk or installation
         // on external/portable sd card can affect Termux app files directory access or exec.
@@ -307,7 +307,7 @@ public final class TermuxInstaller {
 
     static void setupStorageSymlinks(final Context context) {
         final String LOG_TAG = "termux-storage";
-        final String title = TermuxConstants.TERMUX_APP_NAME + " Setup Storage Error";
+        final String title = TermuxConstants.TERMUX_APP_DISPLAY_NAME + " Setup Storage Error";
 
         Logger.logInfo(LOG_TAG, "Setting up storage symlinks.");
 

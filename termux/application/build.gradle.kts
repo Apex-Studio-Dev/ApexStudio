@@ -44,7 +44,7 @@ android {
         buildConfigField("String", "TERMUX_PACKAGE_VARIANT", "\"" + packageVariant + "\"") // Used by TermuxApplication class
 
         manifestPlaceholders["TERMUX_PACKAGE_NAME"] = BuildConfig.PACKAGE_NAME
-        manifestPlaceholders["TERMUX_APP_NAME"] = "AndroidIDE-Dev"
+        manifestPlaceholders["TERMUX_APP_NAME"] = "ApexStudio"
 
         externalNativeBuild {
             ndkBuild {

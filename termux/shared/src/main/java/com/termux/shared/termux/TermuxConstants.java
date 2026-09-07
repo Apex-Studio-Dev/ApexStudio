@@ -339,7 +339,10 @@ public final class TermuxConstants {
      */
 
     /** Termux app name */
-    public static final String TERMUX_APP_NAME = "AndroidIDE-Dev"; // Default: "Termux"
+    public static final String TERMUX_APP_NAME = "ApexStudio"; // Default: "Termux"
+
+    /** User-facing app name shown in notifications/dialogs (may contain spaces). */
+    public static final String TERMUX_APP_DISPLAY_NAME = "Apex Studio";
     /** Termux package name */
     public static final String TERMUX_PACKAGE_NAME = "dev.apexstudio.ide"; // Default: "com.termux"
     /** Termux GitHub repo name */
@@ -601,7 +604,7 @@ public final class TermuxConstants {
     /** Termux app notification channel id used by {@link TERMUX_APP.TERMUX_SERVICE} */
     public static final String TERMUX_APP_NOTIFICATION_CHANNEL_ID = "termux_notification_channel";
     /** Termux app notification channel name used by {@link TERMUX_APP.TERMUX_SERVICE} */
-    public static final String TERMUX_APP_NOTIFICATION_CHANNEL_NAME = TermuxConstants.TERMUX_APP_NAME + " App";
+    public static final String TERMUX_APP_NOTIFICATION_CHANNEL_NAME = TermuxConstants.TERMUX_APP_DISPLAY_NAME + " App";
     /** Termux app unique notification id used by {@link TERMUX_APP.TERMUX_SERVICE} */
     public static final int TERMUX_APP_NOTIFICATION_ID = 1337;
 
@@ -610,12 +613,12 @@ public final class TermuxConstants {
     /** Termux app notification channel id used for plugin command errors */
     public static final String TERMUX_PLUGIN_COMMAND_ERRORS_NOTIFICATION_CHANNEL_ID = "termux_plugin_command_errors_notification_channel";
     /** Termux app notification channel name used for plugin command errors */
-    public static final String TERMUX_PLUGIN_COMMAND_ERRORS_NOTIFICATION_CHANNEL_NAME = TermuxConstants.TERMUX_APP_NAME + " Plugin Commands Errors";
+    public static final String TERMUX_PLUGIN_COMMAND_ERRORS_NOTIFICATION_CHANNEL_NAME = TermuxConstants.TERMUX_APP_DISPLAY_NAME + " Plugin Commands Errors";
 
     /** Termux app notification channel id used for crash reports */
     public static final String TERMUX_CRASH_REPORTS_NOTIFICATION_CHANNEL_ID = "termux_crash_reports_notification_channel";
     /** Termux app notification channel name used for crash reports */
-    public static final String TERMUX_CRASH_REPORTS_NOTIFICATION_CHANNEL_NAME = TermuxConstants.TERMUX_APP_NAME + " Crash Reports";
+    public static final String TERMUX_CRASH_REPORTS_NOTIFICATION_CHANNEL_NAME = TermuxConstants.TERMUX_APP_DISPLAY_NAME + " Crash Reports";
 
 
 
