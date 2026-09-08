@@ -11,7 +11,7 @@
 #   install-toolchain.sh [--manifest <path>] [--jdk <17|21|25>] \
 #     [--platform <api>|all] [--build-tools <ver>|all] \
 #     [--ndk <ver>|all|none] [--cmake <ver>|all|none]
-#   Defaults: --jdk 21 --platform 37 --build-tools 37.0.0 --ndk none --cmake none
+#   Defaults: --jdk 21 --platform 36 --build-tools 36.0.0 --ndk none --cmake none
 #   Repeat a flag to install multiple versions, or pass one of all.
 #   --env-only installs just the base environment packages (JDK, aapt2 and
 #   utilities from the Apex apt repo) and writes the environment, skipping
@@ -60,8 +60,8 @@ IDE_ENV_FILE="$PREFIX/etc/ide-environment.properties"
 TMP="${TMPDIR:-$PREFIX/tmp}"
 
 [ -z "$JDK" ] && JDK="21"
-[ ${#PLATFORMS[@]} -eq 0 ] && PLATFORMS=("37")
-[ ${#BUILD_TOOLS[@]} -eq 0 ] && BUILD_TOOLS=("37.0.0")
+[ ${#PLATFORMS[@]} -eq 0 ] && PLATFORMS=("36")
+[ ${#BUILD_TOOLS[@]} -eq 0 ] && BUILD_TOOLS=("36.0.0")
 
 is_all() { [ "$1" = "all" ]; }
 

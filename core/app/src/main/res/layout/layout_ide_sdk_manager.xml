@@ -217,11 +217,44 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
-        <com.google.android.material.textview.MaterialTextView
-          android:layout_width="wrap_content"
+        <LinearLayout
+          android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:text="@string/label_platforms"
-          android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+          android:gravity="center_vertical"
+          android:orientation="horizontal">
+
+          <com.google.android.material.textview.MaterialTextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/label_platforms"
+            android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+          <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_platforms_select_all"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="8dp"
+            android:text="@string/action_select_all"
+            android:textSize="12sp" />
+
+          <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_platforms_clear"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:minHeight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="4dp"
+            android:text="@string/action_clear"
+            android:textSize="12sp" />
+        </LinearLayout>
 
         <LinearLayout
           android:id="@+id/ll_platforms"
@@ -248,11 +281,44 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
-        <com.google.android.material.textview.MaterialTextView
-          android:layout_width="wrap_content"
+        <LinearLayout
+          android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:text="@string/label_build_tools"
-          android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+          android:gravity="center_vertical"
+          android:orientation="horizontal">
+
+          <com.google.android.material.textview.MaterialTextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/label_build_tools"
+            android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+          <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_build_tools_select_all"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="8dp"
+            android:text="@string/action_select_all"
+            android:textSize="12sp" />
+
+          <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_build_tools_clear"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:minHeight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="4dp"
+            android:text="@string/action_clear"
+            android:textSize="12sp" />
+        </LinearLayout>
 
         <LinearLayout
           android:id="@+id/ll_build_tools"
@@ -279,11 +345,44 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
-        <com.google.android.material.textview.MaterialTextView
-          android:layout_width="wrap_content"
+        <LinearLayout
+          android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:text="@string/label_ndk"
-          android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+          android:gravity="center_vertical"
+          android:orientation="horizontal">
+
+          <com.google.android.material.textview.MaterialTextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/label_ndk"
+            android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+          <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_ndk_select_all"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="8dp"
+            android:text="@string/action_select_all"
+            android:textSize="12sp" />
+
+          <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_ndk_clear"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:minHeight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="4dp"
+            android:text="@string/action_clear"
+            android:textSize="12sp" />
+        </LinearLayout>
 
         <LinearLayout
           android:id="@+id/ll_ndk"
@@ -310,11 +409,44 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp">
 
-        <com.google.android.material.textview.MaterialTextView
-          android:layout_width="wrap_content"
+        <LinearLayout
+          android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:text="@string/label_cmake"
-          android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+          android:gravity="center_vertical"
+          android:orientation="horizontal">
+
+          <com.google.android.material.textview.MaterialTextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/label_cmake"
+            android:textAppearance="@style/TextAppearance.Material3.TitleSmall" />
+
+          <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cmake_select_all"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="8dp"
+            android:text="@string/action_select_all"
+            android:textSize="12sp" />
+
+          <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cmake_clear"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:minHeight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="4dp"
+            android:text="@string/action_clear"
+            android:textSize="12sp" />
+        </LinearLayout>
 
         <LinearLayout
           android:id="@+id/ll_cmake"

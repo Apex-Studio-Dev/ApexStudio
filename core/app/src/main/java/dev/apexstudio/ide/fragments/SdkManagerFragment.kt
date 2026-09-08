@@ -87,6 +87,13 @@ class SdkManagerFragment : Fragment() {
   private val selectedNdkVersions = LinkedHashSet<String>()
   private val selectedCmakeVersions = LinkedHashSet<String>()
 
+  /**
+   * True once the recommended defaults (platform/build-tools) have been applied.
+   * Prevents the recommended versions from being re-selected after the user
+   * clears a category.
+   */
+  private var defaultsApplied = false
+
   @Volatile
   private var installingToolchain = false
 
@@ -121,6 +128,12 @@ class SdkManagerFragment : Fragment() {
 
   companion object {
     private const val EXTRA_COMPACT = "ide.sdk_manager.compact"
+
+    /** Recommended platform API, preselected on first run. */
+    private const val RECOMMENDED_PLATFORM = "36"
+
+    /** Recommended build-tools version, preselected on first run. */
+    private const val RECOMMENDED_BUILD_TOOLS = "36.0.0"
 
     @JvmStatic
     fun newInstance(compact: Boolean = false): SdkManagerFragment {
@@ -171,6 +184,15 @@ class SdkManagerFragment : Fragment() {
         updateJdkStatus()
         onStateChanged?.invoke()
       }
+
+      btnPlatformsSelectAll.setOnClickListener { setAllSelected("platform", true) }
+      btnPlatformsClear.setOnClickListener { setAllSelected("platform", false) }
+      btnBuildToolsSelectAll.setOnClickListener { setAllSelected("build-tools", true) }
+      btnBuildToolsClear.setOnClickListener { setAllSelected("build-tools", false) }
+      btnNdkSelectAll.setOnClickListener { setAllSelected("ndk", true) }
+      btnNdkClear.setOnClickListener { setAllSelected("ndk", false) }
+      btnCmakeSelectAll.setOnClickListener { setAllSelected("cmake", true) }
+      btnCmakeClear.setOnClickListener { setAllSelected("cmake", false) }
     }
 
     refreshComponentLists()
@@ -182,19 +204,27 @@ class SdkManagerFragment : Fragment() {
   private fun refreshComponentLists() {
     content.apply {
       val platformValues = readToolchainManifest().getJSONArray("platforms").toStringList()
-      if (selectedPlatforms.isEmpty()) selectedPlatforms += platformValues
+      val buildTools = readToolchainManifest().getJSONArray("build_tools").toStringList()
+
+      if (!defaultsApplied) {
+        defaultsApplied = true
+        if (platformValues.contains(RECOMMENDED_PLATFORM)) {
+          selectedPlatforms += RECOMMENDED_PLATFORM
+        }
+        if (buildTools.contains(RECOMMENDED_BUILD_TOOLS)) {
+          selectedBuildTools += RECOMMENDED_BUILD_TOOLS
+        }
+      }
+
       populateCheckboxList(llPlatforms, platformValues.map { "API $it" to it },
         selectedPlatforms, "platform") { platformInstalled(it) }
 
-      val buildTools = readToolchainManifest().getJSONArray("build_tools").toStringList()
-      if (selectedBuildTools.isEmpty()) selectedBuildTools += buildTools
       populateCheckboxList(llBuildTools, buildTools.map { "Build-tools $it" to it },
         selectedBuildTools, "build-tools") { buildToolsInstalled(it) }
 
       val ndks = readToolchainManifest().getJSONArray("ndk").toObjectList().map {
         it.getString("display") to it.getString("version")
       }
-      if (selectedNdkVersions.isEmpty()) selectedNdkVersions += ndks.map { it.second }
       populateCheckboxList(llNdk, ndks, selectedNdkVersions, "ndk") {
         File(Environment.ANDROID_HOME, "ndk/$it").exists()
       }
@@ -202,12 +232,64 @@ class SdkManagerFragment : Fragment() {
       val cmakes = readToolchainManifest().getJSONArray("cmake").toObjectList().map {
         it.getString("display") to it.getString("version")
       }
-      if (selectedCmakeVersions.isEmpty()) selectedCmakeVersions += cmakes.map { it.second }
       populateCheckboxList(llCmake, cmakes, selectedCmakeVersions, "cmake") {
         File(Environment.ANDROID_HOME, "cmake/$it").isDirectory
       }
     }
     updateJdkStatus()
+  }
+
+  /**
+   * Selects or clears every version in the given category. Installed components
+   * are left untouched (they are locked/disabled in the UI).
+   */
+  private fun setAllSelected(typeToken: String, selected: Boolean) {
+    content.apply {
+      when (typeToken) {
+        "platform" -> {
+          if (selected) {
+            selectedPlatforms.clear()
+            readToolchainManifest().getJSONArray("platforms").toStringList()
+              .filterNot(::platformInstalled).forEach { selectedPlatforms += it }
+          } else {
+            selectedPlatforms.clear()
+          }
+        }
+        "build-tools" -> {
+          if (selected) {
+            selectedBuildTools.clear()
+            readToolchainManifest().getJSONArray("build_tools").toStringList()
+              .filterNot(::buildToolsInstalled).forEach { selectedBuildTools += it }
+          } else {
+            selectedBuildTools.clear()
+          }
+        }
+        "ndk" -> {
+          if (selected) {
+            selectedNdkVersions.clear()
+            readToolchainManifest().getJSONArray("ndk").toObjectList()
+              .map { it.getString("version") }
+              .filterNot { File(Environment.ANDROID_HOME, "ndk/$it").exists() }
+              .forEach { selectedNdkVersions += it }
+          } else {
+            selectedNdkVersions.clear()
+          }
+        }
+        "cmake" -> {
+          if (selected) {
+            selectedCmakeVersions.clear()
+            readToolchainManifest().getJSONArray("cmake").toObjectList()
+              .map { it.getString("version") }
+              .filterNot { File(Environment.ANDROID_HOME, "cmake/$it").isDirectory }
+              .forEach { selectedCmakeVersions += it }
+          } else {
+            selectedCmakeVersions.clear()
+          }
+        }
+      }
+    }
+    refreshComponentLists()
+    onStateChanged?.invoke()
   }
 
   private fun updateJdkStatus() {
@@ -605,6 +687,14 @@ class SdkManagerFragment : Fragment() {
 
   private fun setUiEnabled(enabled: Boolean) {
     content.jdkVersionLayout.isEnabled = enabled
+    content.btnPlatformsSelectAll.isEnabled = enabled
+    content.btnPlatformsClear.isEnabled = enabled
+    content.btnBuildToolsSelectAll.isEnabled = enabled
+    content.btnBuildToolsClear.isEnabled = enabled
+    content.btnNdkSelectAll.isEnabled = enabled
+    content.btnNdkClear.isEnabled = enabled
+    content.btnCmakeSelectAll.isEnabled = enabled
+    content.btnCmakeClear.isEnabled = enabled
     content.llPlatforms.forEachEnabled(enabled)
     content.llBuildTools.forEachEnabled(enabled)
     content.llNdk.forEachEnabled(enabled)
