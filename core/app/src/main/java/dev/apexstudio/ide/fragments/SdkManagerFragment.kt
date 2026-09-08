@@ -168,6 +168,8 @@ class SdkManagerFragment : Fragment() {
       meteredConnection.root.setText(R.string.msg_connected_to_metered_connection)
       backgroundDataRestricted.root.setText(R.string.msg_disable_background_data_restriction)
 
+      btnSetupSdkManager.setOnClickListener { setupSdkManager() }
+
       val manifest = readToolchainManifest()
 
       val jdks = manifest.getJSONArray("jdk").toStringList()
@@ -202,9 +204,13 @@ class SdkManagerFragment : Fragment() {
   }
 
   private fun refreshComponentLists() {
+    val (catalogPlatforms, catalogBuildTools) = readSdkManagerCatalog()
+    val catalogReady = catalogPlatforms.isNotEmpty() || catalogBuildTools.isNotEmpty()
     content.apply {
-      val platformValues = readToolchainManifest().getJSONArray("platforms").toStringList()
-      val buildTools = readToolchainManifest().getJSONArray("build_tools").toStringList()
+      val platformValues = catalogPlatforms
+      val buildTools = catalogBuildTools
+
+      setupSdkManagerCard.isVisible = !catalogReady
 
       if (!defaultsApplied) {
         defaultsApplied = true
@@ -249,7 +255,7 @@ class SdkManagerFragment : Fragment() {
         "platform" -> {
           if (selected) {
             selectedPlatforms.clear()
-            readToolchainManifest().getJSONArray("platforms").toStringList()
+            readSdkManagerCatalog().first
               .filterNot(::platformInstalled).forEach { selectedPlatforms += it }
           } else {
             selectedPlatforms.clear()
@@ -258,7 +264,7 @@ class SdkManagerFragment : Fragment() {
         "build-tools" -> {
           if (selected) {
             selectedBuildTools.clear()
-            readToolchainManifest().getJSONArray("build_tools").toStringList()
+            readSdkManagerCatalog().second
               .filterNot(::buildToolsInstalled).forEach { selectedBuildTools += it }
           } else {
             selectedBuildTools.clear()
@@ -365,6 +371,55 @@ class SdkManagerFragment : Fragment() {
       onRetry = { installToolchain(onComplete) }
     )
   }
+
+  /**
+   * Sets up the Android SDK Manager: downloads cmdline-tools (sdkmanager),
+   * accepts the SDK licenses and writes the catalog of packages currently
+   * available in the SDK repository (see sdkmanager-setup.sh). Until this runs,
+   * the platform/build-tools lists stay empty.
+   */
+  fun setupSdkManager() {
+    runScriptOperation(
+      statusMessage = getString(R.string.msg_sdk_manager_setup_running),
+      showRetryInitially = false,
+      assetName = "sdkmanager-setup.sh",
+      buildArgs = { arrayOf() },
+      failureLine = { getString(R.string.msg_sdk_manager_setup_failed, it) },
+      onSuccess = {
+        defaultsApplied = false
+        refreshComponentLists()
+        onStateChanged?.invoke()
+      },
+      onRetry = { setupSdkManager() }
+    )
+  }
+
+  /** The catalog of available SDK packages, written by sdkmanager-setup.sh. */
+  private fun sdkManagerCatalogFile(): File =
+    File(File(Environment.PREFIX, "etc/apexstudio"), "sdkmanager-packages.json")
+
+  /**
+   * Reads the catalog written by sdkmanager-setup.sh (platforms/build-tools
+   * actually available in the SDK repository, API >= 30). Returns empty lists
+   * when the SDK Manager has not been set up yet.
+   */
+  private fun readSdkManagerCatalog(): Pair<List<String>, List<String>> {
+    val file = sdkManagerCatalogFile()
+    if (!file.isFile) {
+      return emptyList<String>() to emptyList<String>()
+    }
+    return try {
+      val json = JSONObject(file.readText())
+      val platforms = json.optJSONArray("platforms")?.let(::jsonArrayToStringList).orEmpty()
+      val buildTools = json.optJSONArray("build_tools")?.let(::jsonArrayToStringList).orEmpty()
+      platforms to buildTools
+    } catch (e: Exception) {
+      emptyList<String>() to emptyList<String>()
+    }
+  }
+
+  private fun jsonArrayToStringList(array: org.json.JSONArray): List<String> =
+    (0 until array.length()).map { array.getString(it) }
 
   private fun buildToolchainArgs(): Array<String> {
     val args = mutableListOf<String>()
@@ -508,7 +563,7 @@ class SdkManagerFragment : Fragment() {
         scriptDir.mkdirs()
         val script = File(scriptDir, assetName)
         val ok = when (assetName) {
-          "install-toolchain.sh" -> {
+          "install-toolchain.sh", "sdkmanager-setup.sh" -> {
             val manifest = File(scriptDir, "toolchain-manifest.json")
             val scriptCopy = ResourceUtils.copyFileFromAssets(
               "data/common/$assetName", script.absolutePath)
@@ -687,6 +742,7 @@ class SdkManagerFragment : Fragment() {
 
   private fun setUiEnabled(enabled: Boolean) {
     content.jdkVersionLayout.isEnabled = enabled
+    content.btnSetupSdkManager.isEnabled = enabled
     content.btnPlatformsSelectAll.isEnabled = enabled
     content.btnPlatformsClear.isEnabled = enabled
     content.btnBuildToolsSelectAll.isEnabled = enabled

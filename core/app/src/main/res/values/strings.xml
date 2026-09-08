@@ -49,6 +49,11 @@
   <string name="action_install">Install</string>
   <string name="action_skip">Skip</string>
   <string name="action_show">Show</string>
+  <string name="action_setup_sdk_manager">Set up SDK Manager</string>
+  <string name="msg_sdk_manager_setup_title">SDK Manager setup</string>
+  <string name="msg_sdk_manager_setup_body">The SDK Manager must be set up once: this installs cmdline-tools and accepts the SDK licenses so the app can list the platforms and build-tools actually available.</string>
+  <string name="msg_sdk_manager_setup_running">Setting up the SDK Manager and accepting licenses...</string>
+  <string name="msg_sdk_manager_setup_failed">SDK Manager setup failed with exit code %1$d.</string>
   <string name="action_select_all">Select all</string>
   <string name="action_clear">Clear</string>
 

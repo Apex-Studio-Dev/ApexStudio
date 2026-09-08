@@ -11,7 +11,8 @@
 #   install-toolchain.sh [--manifest <path>] [--jdk <17|21|25>] \
 #     [--platform <api>|all] [--build-tools <ver>|all] \
 #     [--ndk <ver>|all|none] [--cmake <ver>|all|none]
-#   Defaults: --jdk 21 --platform 36 --build-tools 36.0.0 --ndk none --cmake none
+# Defaults: --jdk 21 --platform <none> --build-tools <none> --ndk none --cmake none
+# (platforms/build-tools are only installed when explicitly requested)
 #   Repeat a flag to install multiple versions, or pass one of all.
 #   --env-only installs just the base environment packages (JDK, aapt2 and
 #   utilities from the Apex apt repo) and writes the environment, skipping
@@ -60,8 +61,6 @@ IDE_ENV_FILE="$PREFIX/etc/ide-environment.properties"
 TMP="${TMPDIR:-$PREFIX/tmp}"
 
 [ -z "$JDK" ] && JDK="21"
-[ ${#PLATFORMS[@]} -eq 0 ] && PLATFORMS=("36")
-[ ${#BUILD_TOOLS[@]} -eq 0 ] && BUILD_TOOLS=("36.0.0")
 
 is_all() { [ "$1" = "all" ]; }
 
@@ -69,6 +68,39 @@ json_array() { jq -r "$1" "$MANIFEST"; }
 
 in_manifest() { # <array-prop> <value>
   json_array ".[\"$1\"][]" 2>/dev/null | grep -qx "$2"
+}
+
+# Catalog DB written by sdkmanager-setup.sh; lists what is actually available
+# in the SDK repository. Falls back to the bundled manifest when absent.
+SDK_CATALOG="$PREFIX/etc/apexstudio/sdkmanager-packages.json"
+
+requested() { # <prop> <array...>; prints resolved versions (all -> catalog/manifest list) separated by newline
+  local prop="$1"; shift
+  local out=()
+  local item
+  for item in "$@"; do
+    if is_all "$item"; then
+      while IFS= read -r v; do out+=("$v"); done < <(catalog_values "$prop")
+    else
+      out+=("$item")
+    fi
+  done
+  printf '%s\n' "${out[@]}"
+}
+
+catalog_values() { # <prop>; prints versions from the SDK catalog when present, else the manifest
+  if [ -f "$SDK_CATALOG" ]; then
+    jq -r --arg p "$1" '.[$p][]?' "$SDK_CATALOG" 2>/dev/null && return 0
+  fi
+  json_array ".[\"$1\"][]"
+}
+
+in_catalog() { # <prop> <value>; true when present in the catalog if it exists, else manifest
+  if [ -f "$SDK_CATALOG" ]; then
+    jq -re --arg p "$1" --arg v "$2" '.[$p] | contains([$v])' "$SDK_CATALOG" >/dev/null 2>&1
+  else
+    in_manifest "$1" "$2"
+  fi
 }
 
 jdk_pkg() { # <17|21|25> -> apt package name
@@ -101,9 +133,9 @@ log "Installing JDK $JDK, platforms: ${PLATFORMS[*]}, build-tools: ${BUILD_TOOLS
 # ---- 0. verify requested versions exist in the manifest ----
 if [ "$ENV_ONLY" != "1" ]; then
 in_manifest "jdk" "$JDK" || err "JDK $JDK is not listed in the manifest"
-while IFS= read -r api; do in_manifest "platforms" "$api" || err "platform android-$api is not listed in the manifest"; done \
+while IFS= read -r api; do in_catalog "platforms" "$api" || err "platform android-$api is not available for installation"; done \
   < <(requested platforms "${PLATFORMS[@]}")
-while IFS= read -r bt; do in_manifest "build_tools" "$bt" || err "build-tools $bt is not listed in the manifest"; done \
+while IFS= read -r bt; do in_catalog "build_tools" "$bt" || err "build-tools $bt is not available for installation"; done \
   < <(requested build_tools "${BUILD_TOOLS[@]}")
 while IFS= read -r ndk; do
   is_all "$ndk" && continue
@@ -200,7 +232,9 @@ while IFS= read -r api; do PLATFORM_PKGS+=("platforms;android-$api"); done < <(r
 BT_PKGS=()
 while IFS= read -r bt; do BT_PKGS+=("build-tools;$bt"); done < <(requested build_tools "${BUILD_TOOLS[@]}")
 log "sdkmanager installing: ${PLATFORM_PKGS[*]} ${BT_PKGS[*]}"
-"$SDKMANAGER" "${PLATFORM_PKGS[@]}" "${BT_PKGS[@]}" || err "sdkmanager install failed"
+if [ ${#PLATFORM_PKGS[@]} -gt 0 ] || [ ${#BT_PKGS[@]} -gt 0 ]; then
+  "$SDKMANAGER" "${PLATFORM_PKGS[@]}" "${BT_PKGS[@]}" || err "sdkmanager install failed"
+fi
 
 # ---- 7. NDK (musl builds, need symlink fixes for the Gradle layout) ----
 # The install dir name is the embedded Pkg.Revision from source.properties
