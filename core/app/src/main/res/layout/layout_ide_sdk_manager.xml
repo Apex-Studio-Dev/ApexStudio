@@ -30,6 +30,7 @@
     android:paddingEnd="16dp">
 
     <TextView
+      android:id="@+id/tv_sdk_manager_title"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_marginTop="12dp"
@@ -37,6 +38,7 @@
       android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
 
     <TextView
+      android:id="@+id/tv_sdk_manager_subtitle"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_marginTop="4dp"

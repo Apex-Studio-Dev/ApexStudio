@@ -19,24 +19,20 @@ package dev.apexstudio.ide.fragments.onboarding
 import android.content.Context
 import android.os.Bundle
 import android.view.ViewGroup
-import androidx.core.view.isVisible
-import com.blankj.utilcode.util.ResourceUtils
 import com.github.appintro.SlidePolicy
-import com.termux.app.TermuxInstaller
 import dev.apexstudio.ide.R
 import dev.apexstudio.ide.activities.OnboardingActivity
 import dev.apexstudio.ide.databinding.LayoutEnvPackagesBinding
+import dev.apexstudio.ide.fragments.SdkManagerFragment
 import dev.apexstudio.ide.utils.EnvPackages
-import dev.apexstudio.ide.utils.Environment
 import dev.apexstudio.ide.utils.flashInfo
-import java.io.File
 
 /**
  * Environment packages slide of the onboarding flow.
  *
- * Lets the user install the base toolchain from the Apex apt repository
- * (JDK, aapt2 and a few command-line utilities) before continuing to the
- * SDK manager. This step is skippable.
+ * Embeds the [SdkManagerFragment] so the user can pick which JDK, Android
+ * platforms, build-tools, NDK and CMake versions to install while setting up.
+ * This step is skippable (nothing is installed automatically).
  *
  * @author Apex Studio Dev
  */
@@ -47,12 +43,13 @@ class EnvPackagesFragment : OnboardingFragment(), SlidePolicy {
     get() = checkNotNull(_content) { "Fragment has been destroyed" }
 
   @Volatile
-  private var installingEnv = false
-
-  @Volatile
   private var envReady = false
 
+  private var sdkManager: SdkManagerFragment? = null
+
   companion object {
+    private const val SDK_MANAGER_TAG = "env_sdk_manager"
+
     @JvmStatic
     fun newInstance(context: Context): EnvPackagesFragment {
       return EnvPackagesFragment().apply {
@@ -66,126 +63,82 @@ class EnvPackagesFragment : OnboardingFragment(), SlidePolicy {
     }
   }
 
-  private fun appendEnvLine(line: String) {
-    val status = content.tvEnvStatus
-    val current = status.text?.toString().orEmpty()
-    val prefix = if (current.isNotEmpty() && !current.endsWith("\n")) "\n" else ""
-    status.append("$prefix$line")
-  }
-
   override fun createContentView(parent: ViewGroup, attachToParent: Boolean) {
     _content = LayoutEnvPackagesBinding.inflate(layoutInflater, parent, attachToParent)
 
-    val missing = EnvPackages.missingEnvPackages()
-    if (missing.isEmpty()) {
-      content.tvEnvSummary.setText(R.string.msg_env_installed)
-      content.btnInstall.isVisible = false
-      content.btnSkip.isVisible = false
-      envReady = true
-    } else {
-      content.tvEnvSummary.setText(
-        getString(R.string.msg_env_missing, missing.joinToString(", ")))
+    val existing =
+      childFragmentManager.findFragmentByTag(SDK_MANAGER_TAG) as? SdkManagerFragment
+    sdkManager = existing ?: SdkManagerFragment.newInstance(compact = true).also {
+      childFragmentManager.beginTransaction()
+        .add(content.sdkManagerContainer.id, it, SDK_MANAGER_TAG)
+        .commit()
     }
 
-    content.btnInstall.setOnClickListener { installEnv() }
-    content.btnSkip.setOnClickListener {
+    sdkManager?.onStateChanged = {
+      activity?.runOnUiThread {
+        if (isAdded && _content != null) {
+          updateButtons()
+        }
+      }
+    }
+
+    val missing = EnvPackages.missingEnvPackages()
+    envReady = missing.isEmpty()
+    content.tvEnvSummary.setText(
+      if (missing.isEmpty()) {
+        R.string.msg_env_installed
+      } else {
+        getString(R.string.msg_env_missing, missing.joinToString(", "))
+      })
+
+    content.btnInstall.setOnClickListener { installSelected() }
+    content.btnSkip.setOnClickListener { skipSetup() }
+  }
+
+  private fun updateButtons() {
+    val installing = sdkManager?.isInstalling == true
+    content.btnInstall.isEnabled = !installing
+    content.btnSkip.isEnabled = !installing
+  }
+
+  private fun installSelected() {
+    val sdk = sdkManager ?: return
+    if (sdk.isInstalling) {
+      return
+    }
+    content.btnInstall.isEnabled = false
+    content.btnSkip.isEnabled = false
+    sdk.installToolchain(onComplete = { onSetupFinished() })
+  }
+
+  private fun skipSetup() {
+    if (sdkManager?.isInstalling == true) {
+      return
+    }
+    envReady = true
+    (activity as? OnboardingActivity)?.advanceToNextSlide()
+  }
+
+  private fun onSetupFinished() {
+    activity?.runOnUiThread {
       envReady = true
+      if (isAdded && _content != null) {
+        updateButtons()
+      }
       (activity as? OnboardingActivity)?.advanceToNextSlide()
     }
   }
 
-  private fun installEnv() {
-    if (installingEnv) {
-      return
-    }
-
-    if (!TermuxInstaller.isBootstrapInstalled()) {
-      flashInfo(R.string.msg_setup_bootstrap_wait)
-      return
-    }
-
-    installingEnv = true
-    content.tvEnvStatus.text = getString(R.string.msg_env_installing)
-    content.tvEnvStatus.isVisible = true
-    content.btnInstall.isEnabled = false
-    content.btnSkip.isEnabled = false
-
-    Thread {
-      try {
-        val scriptDir = File(Environment.PREFIX, "etc/apexstudio")
-        scriptDir.mkdirs()
-        val script = File(scriptDir, "install-toolchain.sh")
-        val manifest = File(scriptDir, "toolchain-manifest.json")
-        val scriptOk = ResourceUtils.copyFileFromAssets(
-          "data/common/install-toolchain.sh", script.absolutePath)
-        val manifestOk = ResourceUtils.copyFileFromAssets(
-          "data/common/toolchain-manifest.json", manifest.absolutePath)
-        if (!scriptOk || !manifestOk) {
-          throw IllegalStateException("asset copy failed (script=$scriptOk, manifest=$manifestOk)")
-        }
-        script.setExecutable(true)
-
-        val env = HashMap<String, String>()
-        Environment.putEnvironment(env, false)
-        env["PREFIX"] = Environment.PREFIX.absolutePath
-        env["TMPDIR"] = Environment.TMP_DIR.absolutePath
-        env["PATH"] = Environment.BIN_DIR.absolutePath + ":" + System.getenv("PATH")
-
-        val process = ProcessBuilder(
-          Environment.BASH_SHELL.absolutePath,
-          script.absolutePath
-        ).redirectErrorStream(true)
-          .apply { environment().putAll(env) }
-          .start()
-
-        process.inputStream.bufferedReader().forEachLine { line ->
-          requireActivity().runOnUiThread {
-            if (isAdded) {
-              appendEnvLine(line)
-            }
-          }
-        }
-        val code = process.waitFor()
-        requireActivity().runOnUiThread {
-          if (!isAdded) {
-            return@runOnUiThread
-          }
-          if (code == 0) {
-            envReady = true
-            content.tvEnvSummary.setText(R.string.msg_env_installed)
-            content.btnInstall.isVisible = false
-            content.btnSkip.isVisible = false
-            (activity as? OnboardingActivity)?.advanceToNextSlide()
-          } else {
-            appendEnvLine(getString(R.string.msg_setup_toolchain_failed, code))
-          }
-        }
-      } catch (e: Exception) {
-        requireActivity().runOnUiThread {
-          if (isAdded) {
-            appendEnvLine(getString(R.string.msg_setup_toolchain_error, e.message))
-          }
-        }
-      } finally {
-        requireActivity().runOnUiThread {
-          installingEnv = false
-          if (isAdded) {
-            content.btnInstall.isEnabled = true
-            content.btnSkip.isEnabled = true
-          }
-        }
-      }
-    }.apply {
-      isDaemon = true
-      start()
-    }
-  }
-
   override val isPolicyRespected: Boolean
-    get() = envReady && !installingEnv
+    get() = envReady && sdkManager?.isInstalling != true
 
   override fun onUserIllegallyRequestedNextPage() {
-    flashInfo(R.string.msg_env_installing)
+    flashInfo(
+      if (sdkManager?.isInstalling == true) {
+        R.string.msg_sdk_manager_installing
+      } else {
+        R.string.msg_env_installing
+      })
   }
 
   override fun onDestroyView() {

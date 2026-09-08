@@ -120,12 +120,20 @@ class SdkManagerFragment : Fragment() {
     get() = installingToolchain
 
   companion object {
+    private const val EXTRA_COMPACT = "ide.sdk_manager.compact"
 
     @JvmStatic
-    fun newInstance(): SdkManagerFragment {
-      return SdkManagerFragment()
+    fun newInstance(compact: Boolean = false): SdkManagerFragment {
+      return SdkManagerFragment().apply {
+        arguments = Bundle().apply {
+          putBoolean(EXTRA_COMPACT, compact)
+        }
+      }
     }
   }
+
+  private val isCompact: Boolean
+    get() = arguments?.getBoolean(EXTRA_COMPACT) == true
 
   @SuppressLint("PrivateResource")
   override fun onCreateView(
@@ -134,6 +142,12 @@ class SdkManagerFragment : Fragment() {
     savedInstanceState: Bundle?
   ): View {
     _content = LayoutIdeSdkManagerBinding.inflate(inflater, container, false)
+
+    if (isCompact) {
+      content.tvSdkManagerTitle.isVisible = false
+      content.tvSdkManagerSubtitle.isVisible = false
+      content.connectionInfoContainer.isVisible = false
+    }
 
     content.apply {
       noConnection.root.setText(R.string.msg_no_internet)
@@ -168,18 +182,19 @@ class SdkManagerFragment : Fragment() {
   private fun refreshComponentLists() {
     content.apply {
       val platformValues = readToolchainManifest().getJSONArray("platforms").toStringList()
-      if (selectedPlatforms.isEmpty()) selectedPlatforms += platformValues.firstOrNull().orEmpty()
+      if (selectedPlatforms.isEmpty()) selectedPlatforms += platformValues
       populateCheckboxList(llPlatforms, platformValues.map { "API $it" to it },
         selectedPlatforms, "platform") { platformInstalled(it) }
 
       val buildTools = readToolchainManifest().getJSONArray("build_tools").toStringList()
-      if (selectedBuildTools.isEmpty()) selectedBuildTools += buildTools.firstOrNull().orEmpty()
+      if (selectedBuildTools.isEmpty()) selectedBuildTools += buildTools
       populateCheckboxList(llBuildTools, buildTools.map { "Build-tools $it" to it },
         selectedBuildTools, "build-tools") { buildToolsInstalled(it) }
 
       val ndks = readToolchainManifest().getJSONArray("ndk").toObjectList().map {
         it.getString("display") to it.getString("version")
       }
+      if (selectedNdkVersions.isEmpty()) selectedNdkVersions += ndks.map { it.second }
       populateCheckboxList(llNdk, ndks, selectedNdkVersions, "ndk") {
         File(Environment.ANDROID_HOME, "ndk/$it").exists()
       }
@@ -187,6 +202,7 @@ class SdkManagerFragment : Fragment() {
       val cmakes = readToolchainManifest().getJSONArray("cmake").toObjectList().map {
         it.getString("display") to it.getString("version")
       }
+      if (selectedCmakeVersions.isEmpty()) selectedCmakeVersions += cmakes.map { it.second }
       populateCheckboxList(llCmake, cmakes, selectedCmakeVersions, "cmake") {
         File(Environment.ANDROID_HOME, "cmake/$it").isDirectory
       }
