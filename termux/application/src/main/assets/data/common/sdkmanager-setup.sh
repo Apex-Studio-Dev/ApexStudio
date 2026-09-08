@@ -100,10 +100,11 @@ log "Querying sdkmanager --list"
 LIST_TMP="$TMP/sdkmanager-list.txt"
 "$SDKMANAGER" --list >"$LIST_TMP" 2>&1 || err "sdkmanager --list failed"
 
-platforms="$(grep -oE 'platforms;android-[0-9]+' "$LIST_TMP" \
-  | sed 's/^platforms;android-//' \
-  | awk -v m="$MIN_API" '$1 >= m' \
-  | sort -nr -u)"
+platforms="$(grep -oE 'platforms;android-[0-9]+(\.[0-9]+)?' "$LIST_TMP" \
+  | sed -E 's/^platforms;android-//' \
+  | grep -Evi '(-ext|-beta|-rc|-alpha|canary)' \
+  | awk -F. -v m="$MIN_API" '$1 >= m' \
+  | sort -t. -k1,1nr -k2,2nr -u)"
 
 build_tools="$(grep -oE 'build-tools;[0-9]+\.[0-9]+([.0-9]+)?' "$LIST_TMP" \
   | sed 's/^build-tools;//' \
