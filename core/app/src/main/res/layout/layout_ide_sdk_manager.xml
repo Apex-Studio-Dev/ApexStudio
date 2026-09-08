@@ -87,6 +87,71 @@
     </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView
+      android:id="@+id/resume_panel"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="12dp"
+      android:visibility="gone"
+      app:cardBackgroundColor="#FF0B0D12"
+      app:cardCornerRadius="16dp"
+      app:cardElevation="0dp"
+      app:strokeColor="#22FFFFFF"
+      app:strokeWidth="1dp"
+      tools:visibility="visible">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="12dp">
+
+        <View
+          android:layout_width="12dp"
+          android:layout_height="12dp"
+          android:background="@drawable/bg_mac_dot_red"
+          android:contentDescription="@null" />
+
+        <View
+          android:layout_width="12dp"
+          android:layout_height="12dp"
+          android:layout_marginStart="6dp"
+          android:background="@drawable/bg_mac_dot_yellow"
+          android:contentDescription="@null" />
+
+        <View
+          android:layout_width="12dp"
+          android:layout_height="12dp"
+          android:layout_marginStart="6dp"
+          android:background="@drawable/bg_mac_dot_green"
+          android:contentDescription="@null" />
+
+        <TextView
+          android:id="@+id/tv_install_status"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_marginStart="12dp"
+          android:layout_weight="1"
+          android:text="@string/msg_sdk_manager_installing"
+          android:textColor="#FFFFFFFF"
+          android:textSize="12sp"
+          android:fontFamily="sans-serif-medium" />
+
+        <com.google.android.material.button.MaterialButton
+          android:id="@+id/btn_show_install_dialog"
+          style="@style/Widget.Material3.Button.TextButton"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:minHeight="32dp"
+          android:text="@string/action_show"
+          android:textColor="#4FC3F7" />
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_marginTop="16dp"
@@ -259,74 +324,5 @@
           android:orientation="vertical" />
       </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
-
-    <com.google.android.material.card.MaterialCardView
-      android:id="@+id/resume_panel"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:layout_marginTop="12dp"
-      android:visibility="gone"
-      app:cardBackgroundColor="#FF0B0D12"
-      app:cardCornerRadius="16dp"
-      app:cardElevation="0dp"
-      app:strokeColor="#22FFFFFF"
-      app:strokeWidth="1dp"
-      tools:visibility="visible">
-
-      <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="8dp"
-        android:paddingBottom="10dp">
-
-        <View
-          android:layout_width="10dp"
-          android:layout_height="10dp"
-          android:background="@drawable/bg_mac_dot_red"
-          android:contentDescription="@null" />
-
-        <View
-          android:layout_width="10dp"
-          android:layout_height="10dp"
-          android:layout_marginStart="6dp"
-          android:background="@drawable/bg_mac_dot_yellow"
-          android:contentDescription="@null" />
-
-        <View
-          android:layout_width="10dp"
-          android:layout_height="10dp"
-          android:layout_marginStart="6dp"
-          android:background="@drawable/bg_mac_dot_green"
-          android:contentDescription="@null" />
-
-        <TextView
-          android:id="@+id/tv_install_status"
-          android:layout_width="0dp"
-          android:layout_height="wrap_content"
-          android:layout_marginStart="12dp"
-          android:layout_weight="1"
-          android:text="@string/msg_sdk_manager_installing"
-          android:textColor="#FFFFFFFF"
-          android:textSize="11sp" />
-
-        <com.google.android.material.button.MaterialButton
-          android:id="@+id/btn_show_install_dialog"
-          style="@style/Widget.Material3.Button.TextButton"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:minHeight="24dp"
-          android:text="@string/action_show"
-          android:textColor="#4FC3F7"
-          android:textSize="11sp" />
-      </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
-    <Space
-      android:layout_width="match_parent"
-      android:layout_height="16dp" />
   </LinearLayout>
 </androidx.core.widget.NestedScrollView>

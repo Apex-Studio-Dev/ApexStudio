@@ -126,7 +126,10 @@ class OnboardingActivity : AppIntro2() {
   fun advanceToNextSlide() {
     runOnUiThread {
       try {
-        goToNextSlide()
+        // EnvPackagesFragment is always the last slide. goToNextSlide() on the
+        // last slide only triggers the (no-op) onIntroFinished(), so emulate
+        // the Done button instead to complete the onboarding flow.
+        onDonePressed(null)
       } catch (t: Throwable) {
         // ignore; the user can advance manually
       }
