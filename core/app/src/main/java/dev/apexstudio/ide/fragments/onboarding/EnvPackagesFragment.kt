@@ -86,7 +86,7 @@ class EnvPackagesFragment : OnboardingFragment(), SlidePolicy {
     envReady = missing.isEmpty()
     content.tvEnvSummary.setText(
       if (missing.isEmpty()) {
-        R.string.msg_env_installed
+        getString(R.string.msg_env_installed)
       } else {
         getString(R.string.msg_env_missing, missing.joinToString(", "))
       })
