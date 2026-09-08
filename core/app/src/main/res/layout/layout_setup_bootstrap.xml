@@ -39,24 +39,45 @@
 
       <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="32dp"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp">
+
+        <View
+          android:layout_width="10dp"
+          android:layout_height="10dp"
+          android:background="@drawable/bg_mac_dot_red"
+          android:contentDescription="@null" />
+
+        <View
+          android:layout_width="10dp"
+          android:layout_height="10dp"
+          android:layout_marginStart="6dp"
+          android:background="@drawable/bg_mac_dot_yellow"
+          android:contentDescription="@null" />
+
+        <View
+          android:layout_width="10dp"
+          android:layout_height="10dp"
+          android:layout_marginStart="6dp"
+          android:background="@drawable/bg_mac_dot_green"
+          android:contentDescription="@null" />
 
         <TextView
-          android:layout_width="wrap_content"
+          android:layout_width="0dp"
           android:layout_height="wrap_content"
+          android:layout_marginStart="10dp"
+          android:layout_weight="1"
           android:text="@string/label_setup_terminal"
           android:textAllCaps="true"
           android:textColor="#80FFFFFF"
-          android:textSize="11sp" />
-
-        <View
-          android:layout_width="0dp"
-          android:layout_height="1dp"
-          android:layout_weight="1" />
+          android:textSize="11sp"
+          android:textStyle="bold"
+          android:letterSpacing="0.06" />
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
           android:id="@+id/terminal_spinner"

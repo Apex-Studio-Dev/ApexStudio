@@ -561,22 +561,22 @@ class SdkManagerFragment : Fragment() {
 
   private fun showResumeBanner() {
     val contentView = _content ?: return
-    contentView.tvInstallStatus?.let {
-      it.text = getString(R.string.msg_sdk_manager_install_in_progress)
-      it.isVisible = true
-      it.isClickable = true
-      it.setOnClickListener {
-        installDialogHidden = false
-        installDialog?.show()
-        hideResumeBanner()
-      }
+    contentView.resumePanel.isVisible = true
+    contentView.tvInstallStatus.text = getString(R.string.msg_sdk_manager_install_in_progress)
+    val showDialog = {
+      installDialogHidden = false
+      hideResumeBanner()
+      installDialog?.show()
     }
+    contentView.btnShowInstallDialog.setOnClickListener { showDialog() }
+    contentView.resumePanel.setOnClickListener { showDialog() }
   }
 
   private fun hideResumeBanner() {
-    _content?.tvInstallStatus?.let {
+    _content?.resumePanel?.let {
       it.isVisible = false
       it.setOnClickListener(null)
+      _content?.btnShowInstallDialog?.setOnClickListener(null)
     }
   }
 
@@ -618,7 +618,8 @@ class SdkManagerFragment : Fragment() {
   }
 
   private fun appendInstallLine(line: String) {
-    val log = installDialogBinding?.txtLog ?: return
+    val binding = installDialogBinding ?: return
+    val log = binding.txtLog ?: return
     val currentText = log.text?.toString().orEmpty()
     log.text =
       currentText + if (currentText.endsWith("\n") || currentText.isEmpty()) {
@@ -626,6 +627,7 @@ class SdkManagerFragment : Fragment() {
       } else {
         "\n$line"
       }
+    binding.logScroll?.post { binding.logScroll?.fullScroll(View.FOCUS_DOWN) }
   }
 
   private fun readToolchainManifest(): JSONObject {

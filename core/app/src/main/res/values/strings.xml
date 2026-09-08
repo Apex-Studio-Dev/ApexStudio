@@ -48,6 +48,7 @@
   <string name="msg_env_missing">Missing environment packages: %1$s</string>
   <string name="action_install">Install</string>
   <string name="action_skip">Skip</string>
+  <string name="action_show">Show</string>
 
   <!--  Onboarding SDK manager slide-->
   <string name="title_install_tools_apex">SDK Manager</string>
