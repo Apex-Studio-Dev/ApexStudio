@@ -153,6 +153,10 @@ class SdkManagerFragment : Fragment() {
         com.google.android.material.R.layout.m3_auto_complete_simple_item,
         jdkDisplayNames)
       )
+      jdkVersion.setOnItemClickListener { _, _, _, _ ->
+        updateJdkStatus()
+        onStateChanged?.invoke()
+      }
     }
 
     refreshComponentLists()
@@ -187,7 +191,28 @@ class SdkManagerFragment : Fragment() {
         File(Environment.ANDROID_HOME, "cmake/$it").isDirectory
       }
     }
+    updateJdkStatus()
   }
+
+  private fun updateJdkStatus() {
+    val selected = content.jdkVersion.text?.toString()?.removePrefix("JDK ")?.replace(" ", "")
+      .orEmpty()
+    val installed = selected.isNotEmpty() && jdkInstalled(selected)
+    val label = if (installed) {
+      getString(R.string.msg_sdk_component_installed)
+    } else {
+      getString(R.string.msg_sdk_component_not_installed)
+    }
+    content.tvJdkStatus.text =
+      getString(R.string.msg_sdk_jdk_status, selected, label)
+    content.tvJdkStatus.setTextColor(MaterialColors.getColor(requireContext(),
+      if (installed) com.google.android.material.R.attr.colorPrimary
+      else com.google.android.material.R.attr.colorOnSurfaceVariant, 0))
+    content.tvJdkStatus.isVisible = selected.isNotEmpty()
+  }
+
+  private fun jdkInstalled(version: String): Boolean =
+    File(File(Environment.PREFIX, "lib/jvm"), "java-$version-openjdk").isDirectory
 
   fun needsInstall(): Boolean {
     if (installingToolchain) {
@@ -196,6 +221,14 @@ class SdkManagerFragment : Fragment() {
 
     val ideEnvFile = File(File(Environment.PREFIX, "etc"), "ide-environment.properties")
     if (!ideEnvFile.isFile) {
+      return true
+    }
+
+    val selectedJdk = content.jdkVersion.text?.toString()
+      ?.removePrefix("JDK ")
+      ?.replace(" ", "")
+      .orEmpty()
+    if (selectedJdk.isNotEmpty() && !jdkInstalled(selectedJdk)) {
       return true
     }
 

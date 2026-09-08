@@ -157,17 +157,13 @@ class OnboardingActivity : AppIntro2() {
       return
     }
 
-    if (!TermuxInstaller.isBootstrapInstalled()) {
-      startActivity(Intent(this, SetupActivity::class.java))
-      return
-    }
-
     tryNavigateToMainIfSetupIsCompleted()
   }
 
   private fun isSetupCompleted(): Boolean {
     return StatPreferences.statConsentDialogShown
         && PermissionsFragment.areAllPermissionsGranted(this)
+        && TermuxInstaller.isBootstrapInstalled()
   }
 
   private fun tryNavigateToMainIfSetupIsCompleted(): Boolean {

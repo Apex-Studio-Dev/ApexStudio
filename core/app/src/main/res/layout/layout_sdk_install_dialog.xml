@@ -35,23 +35,88 @@
       tools:text="Installing selected components..." />
   </LinearLayout>
 
-  <ScrollView
-    android:id="@+id/log_scroll"
+  <com.google.android.material.card.MaterialCardView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="12dp"
-    android:maxHeight="180dp">
+    app:cardBackgroundColor="#FF0B0D12"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#22FFFFFF"
+    app:strokeWidth="1dp">
 
-    <TextView
-      android:id="@+id/txt_log"
+    <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:fontFamily="monospace"
-      android:textColor="?attr/colorOnSurfaceVariant"
-      android:textIsSelectable="true"
-      android:textSize="12sp"
-      tools:text="line 1\nline 2\nline 3" />
-  </ScrollView>
+      android:orientation="vertical">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <View
+          android:layout_width="10dp"
+          android:layout_height="10dp"
+          android:background="@drawable/bg_mac_dot_red"
+          android:contentDescription="@null" />
+
+        <View
+          android:layout_width="10dp"
+          android:layout_height="10dp"
+          android:layout_marginStart="6dp"
+          android:background="@drawable/bg_mac_dot_yellow"
+          android:contentDescription="@null" />
+
+        <View
+          android:layout_width="10dp"
+          android:layout_height="10dp"
+          android:layout_marginStart="6dp"
+          android:background="@drawable/bg_mac_dot_green"
+          android:contentDescription="@null" />
+
+        <TextView
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_marginStart="10dp"
+          android:layout_weight="1"
+          android:text="@string/label_install_terminal"
+          android:textColor="#80FFFFFF"
+          android:textSize="11sp"
+          android:textStyle="bold"
+          android:letterSpacing="0.06"
+          android:textAllCaps="true" />
+      </LinearLayout>
+
+      <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#22FFFFFF" />
+
+      <ScrollView
+        android:id="@+id/log_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+        <TextView
+          android:id="@+id/txt_log"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:fontFamily="monospace"
+          android:paddingStart="16dp"
+          android:paddingEnd="16dp"
+          android:textColor="#FFFFFFFF"
+          android:textIsSelectable="true"
+          android:textSize="11sp"
+          tools:text="line 1\nline 2\nline 3" />
+      </ScrollView>
+    </LinearLayout>
+  </com.google.android.material.card.MaterialCardView>
 
   <LinearLayout
     android:layout_width="match_parent"

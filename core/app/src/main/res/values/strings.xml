@@ -26,6 +26,7 @@
   <string name="title_setup">Setup</string>
   <string name="subtitle_setup">Installing the environment. This may take a few minutes.</string>
   <string name="label_setup_terminal">bootstrap</string>
+  <string name="label_install_terminal">Install terminal</string>
   <string name="status_setup_installing">Installing bootstrap packages...</string>
   <string name="status_setup_done">Setup complete</string>
   <string name="action_continue">Continue</string>
@@ -67,6 +68,8 @@
   <string name="label_sdk_manager">SDK Manager</string>
   <string name="subtitle_sdk_manager">Select the JDK and SDK components to install. Installed components are locked and can be removed at any time.</string>
   <string name="msg_sdk_component_installed">Installed</string>
+  <string name="msg_sdk_component_not_installed">Not installed</string>
+  <string name="msg_sdk_jdk_status">JDK %1$s — %2$s</string>
   <string name="action_uninstall">Uninstall</string>
   <string name="msg_sdk_manager_uninstalling">Uninstalling %1$s...</string>
   <string name="msg_sdk_manager_uninstalled">Component uninstalled.</string>

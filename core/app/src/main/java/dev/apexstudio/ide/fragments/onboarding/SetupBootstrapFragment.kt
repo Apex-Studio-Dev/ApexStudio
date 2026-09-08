@@ -24,7 +24,6 @@ import androidx.core.view.isVisible
 import com.github.appintro.SlidePolicy
 import com.termux.app.TermuxInstaller
 import dev.apexstudio.ide.R
-import dev.apexstudio.ide.activities.OnboardingActivity
 import dev.apexstudio.ide.databinding.LayoutSetupBootstrapBinding
 import dev.apexstudio.ide.utils.flashInfo
 
@@ -61,9 +60,10 @@ class SetupBootstrapFragment : OnboardingFragment(), SlidePolicy {
   override fun onResume() {
     super.onResume()
     // onResume runs only when this slide becomes the current page of the pager,
-    // so the install (and the auto-skip) starts exactly when the user reaches
-    // it - not when the pager pre-creates the slide while an earlier one is
-    // still being shown.
+    // so the install starts exactly when the user reaches it - not when the
+    // pager pre-creates the slide while an earlier one is still being shown.
+    // Once the bootstrap is ready the Next button becomes enabled (isPolicyRespected)
+    // and the user advances manually - no auto-skip.
     if (setupHandled) return
     setupHandled = true
 
@@ -71,7 +71,6 @@ class SetupBootstrapFragment : OnboardingFragment(), SlidePolicy {
       bootstrapReady = true
       appendLine("[setup] Bootstrap is already installed.")
       setStatus(getString(R.string.msg_setup_bootstrap_installed), done = true)
-      (activity as? OnboardingActivity)?.advanceToNextSlide()
       return
     }
 
@@ -87,7 +86,6 @@ class SetupBootstrapFragment : OnboardingFragment(), SlidePolicy {
         appendLine("[setup] Bootstrap installed.")
         setStatus(getString(R.string.msg_setup_bootstrap_installed), done = true)
         bootstrapReady = true
-        (activity as? OnboardingActivity)?.advanceToNextSlide()
       }
     )
   }

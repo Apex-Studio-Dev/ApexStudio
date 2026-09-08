@@ -75,7 +75,7 @@ jdk_pkg() { # <17|21|25> -> apt package name
   case "$1" in
     17) echo "openjdk-17" ;;
     21) echo "openjdk-21" ;;
-    25) echo "openjdk-25-x" ;;
+    25) echo "openjdk-25" ;;
     *) echo "openjdk-$1" ;;
   esac
 }
