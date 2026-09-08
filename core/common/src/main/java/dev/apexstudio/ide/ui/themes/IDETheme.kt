@@ -54,6 +54,6 @@ enum class IDETheme(
     /**
      * The default theme.
      */
-    val DEFAULT = BLUE_WAVE
+    val DEFAULT = MATERIAL_YOU
   }
 }

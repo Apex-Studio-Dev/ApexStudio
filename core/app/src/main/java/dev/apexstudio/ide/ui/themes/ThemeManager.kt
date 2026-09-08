@@ -53,6 +53,13 @@ class ThemeManager : IThemeManager {
   override fun getCurrentStyle(activity: Activity): Int {
     val theme = getCurrentTheme()
 
+    // Material You theme has no dedicated style resource. DynamicColors is applied
+    // by the application. Return 0 so that dialogs (e.g. git dialogs) use the
+    // default dialog theme instead of an invalid style resource (-1).
+    if (theme == IDETheme.MATERIAL_YOU) {
+      return 0
+    }
+
     return if (activity.isSystemInDarkMode()) {
       theme.styleDark
     } else {

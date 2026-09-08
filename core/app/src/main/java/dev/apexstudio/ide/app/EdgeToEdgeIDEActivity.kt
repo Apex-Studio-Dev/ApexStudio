@@ -152,7 +152,13 @@ abstract class EdgeToEdgeIDEActivity : IDEActivity() {
       this.onApplyWindowInsetsListener
     )
 
-    this.window.decorView.doOnAttach { onApplySystemBarInsets(getSystemBarInsets(it)) }
+    this.window.decorView.doOnAttach {
+      // The decor view may already be attached when the activity is being
+      // recreated (e.g. on a configuration/UI mode change). In that case the
+      // callback runs before the activity content has been created, so defer it
+      // until the current message loop has finished.
+      it.post { onApplySystemBarInsets(getSystemBarInsets(it)) }
+    }
   }
 
   /**

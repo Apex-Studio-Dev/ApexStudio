@@ -18,8 +18,11 @@
 
 package dev.apexstudio.ide.app
 
+import android.app.Activity
+import android.app.Application
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -86,6 +89,8 @@ class IDEApplication : TermuxApplication() {
   private var uncaughtExceptionHandler: UncaughtExceptionHandler? = null
   private var ideLogcatReader: IDELogcatReader? = null
 
+  private val startedActivities = mutableListOf<Activity>()
+
   init {
     if (!VMUtils.isJvm()) {
       TreeSitter.loadLibrary()
@@ -129,6 +134,23 @@ class IDEApplication : TermuxApplication() {
       .installDefaultEventBus(true)
 
     EventBus.getDefault().register(this)
+
+    registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+      override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        if (activity !in startedActivities) {
+          startedActivities.add(activity)
+        }
+      }
+
+      override fun onActivityStarted(activity: Activity) {}
+      override fun onActivityResumed(activity: Activity) {}
+      override fun onActivityPaused(activity: Activity) {}
+      override fun onActivityStopped(activity: Activity) {}
+      override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+      override fun onActivityDestroyed(activity: Activity) {
+        startedActivities.remove(activity)
+      }
+    })
 
     CoroutineScope(Dispatchers.Main).launch {
       withContext(Dispatchers.Main) {
@@ -218,6 +240,15 @@ class IDEApplication : TermuxApplication() {
       }
     } else if (event.key == GeneralPreferences.UI_MODE && GeneralPreferences.uiMode != AppCompatDelegate.getDefaultNightMode()) {
       AppCompatDelegate.setDefaultNightMode(GeneralPreferences.uiMode)
+    } else if (event.key == GeneralPreferences.SELECTED_THEME) {
+      if (IThemeManager.getInstance().getCurrentTheme() == IDETheme.MATERIAL_YOU) {
+        DynamicColors.applyToActivitiesIfAvailable(instance)
+      }
+      coroutineScope.launch {
+        // Recreate the running activities so that the newly selected theme is
+        // applied without the need to restart the application.
+        startedActivities.toList().forEach { it.recreate() }
+      }
     } else if (event.key == GeneralPreferences.SELECTED_LOCALE) {
 
       // Use empty locale list if the locale has been reset to 'System Default'
