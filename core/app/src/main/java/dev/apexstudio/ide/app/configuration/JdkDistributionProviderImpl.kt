@@ -65,18 +65,20 @@ class JdkDistributionProviderImpl : IJdkDistributionProvider {
       val home = File(BuildPreferences.javaHome)
       val java = File(home, "bin/java")
 
-      // the previously selected JDK distribution does not exist
+      // the previously selected JDK distribution does not exist or is unusable;
       // check if we have other distributions installed
-      if (!home.exists() || !java.exists() || !java.isFile) {
+      if (!home.exists() || !java.exists() || !java.isFile || !java.canExecute()) {
         if (distributions.isNotEmpty()) {
           log.warn(
-            "Previously selected java.home does not exists! Falling back to ${distributions[0]}...")
+            "Previously selected java.home does not exist or is not usable! Falling back to ${distributions[0]}...")
           BuildPreferences.javaHome = distributions[0].javaHome
         }
       }
 
-      if (!java.canExecute()) {
-        java.setExecutable(true)
+      // ensure the resolved java binary is executable
+      val resolvedJava = File(BuildPreferences.javaHome, "bin/java")
+      if (resolvedJava.exists() && resolvedJava.isFile && !resolvedJava.canExecute()) {
+        resolvedJava.setExecutable(true)
       }
 
       log.debug("Setting Environment.JAVA_HOME to {}", BuildPreferences.javaHome)

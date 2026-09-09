@@ -19,6 +19,7 @@ package dev.apexstudio.ide.utils
 
 import dev.apexstudio.ide.utils.Environment
 import java.io.File
+import java.io.FileInputStream
 import java.nio.file.Files
 
 /**
@@ -40,6 +41,35 @@ import java.nio.file.Files
  *
  * @author Apex Studio Dev
  */
+/**
+ * ZIP local-file-header magic: `PK\x03\x04`.
+ * Shared by ZIP, JAR, APK, AAR, WAR — all are ZIP containers.
+ */
+private val ZIP_MAGIC = byteArrayOf(0x50, 0x4B, 0x03, 0x04)
+
+/**
+ * Returns `true` when [file] is a readable regular file whose first four
+ * bytes are the ZIP local-file-header magic (`PK\x03\x04`). This is stronger
+ * than a mere `.exists()` / extension check: a truncated, empty or
+ * misnamed file will not match.
+ *
+ * Works for APK, JAR, AAR, WAR and plain `.zip` files.
+ */
+fun isZipFile(file: File): Boolean {
+  if (!file.isFile || file.length() < ZIP_MAGIC.size) {
+    return false
+  }
+  return try {
+    FileInputStream(file).use { input ->
+      val header = ByteArray(ZIP_MAGIC.size)
+      val read = input.read(header)
+      read == ZIP_MAGIC.size && header.contentEquals(ZIP_MAGIC)
+    }
+  } catch (e: Exception) {
+    false
+  }
+}
+
 object ToolchainStatus {
 
   private fun File.isExecutableFile(): Boolean = isFile && canExecute()

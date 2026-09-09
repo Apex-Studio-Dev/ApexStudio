@@ -28,8 +28,9 @@ fun isValidProjectDirectory(selectedDir: File): Boolean {
     val appFolder = File(selectedDir, "app")
     val buildGradleFile = File(appFolder, "build.gradle")
     val buildGradleKtsFile = File(appFolder, "build.gradle.kts")
-    return appFolder.exists() && appFolder.isDirectory &&
-            (buildGradleFile.exists() || buildGradleKtsFile.exists())
+    return appFolder.isDirectory &&
+            (buildGradleFile.isFile && buildGradleFile.canRead() ||
+                buildGradleKtsFile.isFile && buildGradleKtsFile.canRead())
 }
 
 /**
@@ -55,5 +56,5 @@ internal fun isValidProjectOrContainerDirectory(selectedDir: File): Boolean {
 internal fun isPluginProject(dir: File): Boolean {
     val pluginApiJar = File(dir, "libs/plugin-api.jar")
     val buildGradle = File(dir, "build.gradle.kts")
-    return pluginApiJar.exists() && buildGradle.exists()
+    return isZipFile(pluginApiJar) && buildGradle.isFile && buildGradle.canRead()
 }

@@ -9,6 +9,7 @@ import dev.apexstudio.ide.projects.api.AndroidModule
 import dev.apexstudio.ide.projects.builder.BuildService
 import dev.apexstudio.ide.projects.models.assembleTaskOutputListingFile
 import dev.apexstudio.ide.tooling.api.messages.TaskExecutionMessage
+import dev.apexstudio.ide.utils.isZipFile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.future.await
@@ -53,8 +54,8 @@ class BuildViewModel : ViewModel() {
                 val apkFile = ApkMetadata.findApkFile(outputListingFile)
                     ?: throw RuntimeException("No APK found in output listing file.")
 
-                if (!apkFile.exists()) {
-                    throw RuntimeException("APK file specified does not exist: $apkFile")
+                if (!apkFile.exists() || !isZipFile(apkFile)) {
+                    throw RuntimeException("APK file specified does not exist or is not a valid ZIP: $apkFile")
                 }
 
                 _buildState.value = BuildState.AwaitingInstall(apkFile, launchInDebugMode)

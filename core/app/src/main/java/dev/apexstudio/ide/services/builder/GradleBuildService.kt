@@ -59,6 +59,7 @@ import dev.apexstudio.ide.tooling.api.messages.result.TaskExecutionResult
 import dev.apexstudio.ide.tooling.api.models.ToolingServerMetadata
 import dev.apexstudio.ide.tooling.events.ProgressEvent
 import dev.apexstudio.ide.utils.Environment
+import dev.apexstudio.ide.utils.isZipFile
 import dev.apexstudio.ide.eventbus.events.BuildCompletedEvent
 import dev.apexstudio.ide.eventbus.events.BuildStartedEvent
 import com.termux.shared.termux.shell.command.environment.TermuxShellEnvironment
@@ -126,7 +127,8 @@ class GradleBuildService : Service(), BuildService, IToolingApiClient,
       val gradlew = File(projectRoot, "gradlew")
       val gradleWrapperJar = File(projectRoot, "gradle/wrapper/gradle-wrapper.jar")
       val gradleWrapperProps = File(projectRoot, "gradle/wrapper/gradle-wrapper.properties")
-      return gradlew.exists() && gradleWrapperJar.exists() && gradleWrapperProps.exists()
+      return gradlew.isFile && gradlew.canExecute() &&
+        isZipFile(gradleWrapperJar) && gradleWrapperProps.isFile && gradleWrapperProps.canRead()
     }
 
   companion object {

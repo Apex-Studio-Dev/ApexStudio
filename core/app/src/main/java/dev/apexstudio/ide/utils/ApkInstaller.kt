@@ -38,8 +38,8 @@ object ApkInstaller {
         apk: File,
         debugFallbackInstaller: Boolean = DEBUG_FALLBACK_INSTALLER,
     ): Boolean {
-        if (!apk.exists() || !apk.isFile || apk.extension != "apk") {
-            log.error("File is not an APK: {}", apk)
+        if (!apk.exists() || !apk.isFile || !isZipFile(apk)) {
+            log.error("File is not a valid APK (ZIP magic missing): {}", apk)
             return false
         }
 

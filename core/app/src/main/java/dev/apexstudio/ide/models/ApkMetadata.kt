@@ -20,6 +20,7 @@ package dev.apexstudio.ide.models
 import com.google.gson.annotations.SerializedName
 import dev.apexstudio.ide.utils.JSONUtility.gson
 import dev.apexstudio.ide.utils.ListingFileRedirect.getListingFile
+import dev.apexstudio.ide.utils.isZipFile
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
@@ -71,7 +72,7 @@ class ApkMetadata {
 
             if (element.outputFile!!.endsWith(".apk")) {
               val apk = element.outputFile?.let { File(dir, it) } ?: continue
-              if (apk.exists() && apk.isFile) {
+              if (isZipFile(apk)) {
                 log.info("Found apk in metadata: {}", apk)
                 return@use apk
               }
