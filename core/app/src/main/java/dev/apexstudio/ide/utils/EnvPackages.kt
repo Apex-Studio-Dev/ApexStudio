@@ -17,9 +17,6 @@
 
 package dev.apexstudio.ide.utils
 
-import dev.apexstudio.ide.utils.Environment
-import java.io.File
-
 /**
  * Tracks the packages that make up the ApexStudio build environment.
  *
@@ -40,11 +37,11 @@ object EnvPackages {
    */
   fun missingEnvPackages(): List<String> = buildList {
     for (name in recommended) {
-      if (!File(Environment.BIN_DIR, name).exists()) {
+      if (!ToolchainStatus.envPackageInstalled(name)) {
         add(name)
       }
     }
-    if (!File(Environment.JAVA_HOME, "bin/java").exists() && "openjdk" !in this) {
+    if (!ToolchainStatus.jdkAtHomeInstalled() && "openjdk" !in this) {
       add("openjdk")
     }
   }

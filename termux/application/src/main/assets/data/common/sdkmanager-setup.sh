@@ -41,6 +41,50 @@ DB_FILE="$DB_DIR/sdkmanager-packages.json"
 TMP="${TMPDIR:-$PREFIX/tmp}"
 APEXSTUDIO_ETC="$PREFIX/etc/apexstudio"
 
+# Runs a (potentially long) foreground command in the background so bash's
+# signal traps fire immediately: `wait` is interruptible, a foreground child is
+# not (bash defers the trap until the child finishes).
+bg_wait() {
+  "$@" &
+  local pid=$!
+  wait "$pid"
+}
+
+# Removes a partially unpacked cmdline-tools on a failed setup so the app's
+# strong check (an executable sdkmanager) does not report it as installed.
+cleanup_on_fail() {
+  local code=$?
+  trap - EXIT INT TERM
+  set +e
+  # Kill any children that survived a cancel/failure (curl, sdkmanager, ...) so
+  # they cannot keep writing while we remove partial state below. Only OUR
+  # children are signalled (not the process group): the app spawns bash in its
+  # own process group and must survive.
+  if [ "$code" -ne 0 ]; then
+    pkill -TERM -P $$ 2>/dev/null
+    sleep 1
+    pkill -KILL -P $$ 2>/dev/null
+  fi
+  rm -rf "$TMP/ctools-staging"
+  rm -f "$TMP/commandlinetools-linux.zip"
+  if [ "$code" -ne 0 ]; then
+    [ ! -x "$SDKMANAGER" ] && { [ -d "$CMDTOOLS_DIR" ] && rm -rf "$CMDTOOLS_DIR" && log "  removed partial cmdline-tools"; }
+    log "Cleanup complete"
+  fi
+  return 0
+}
+trap cleanup_on_fail EXIT
+
+# The app sends SIGTERM to bash on Cancel. Kill our running children first so a
+# partial download/install stops writing, then exit (the EXIT trap cleans up).
+# Do NOT use `kill -TERM -$$` here — bash runs in the app's process group, so
+# that would take the whole Android app down.
+sigexit() {
+  pkill -TERM -P $$ 2>/dev/null
+  exit 130
+}
+trap sigexit INT TERM
+
 # ---- 0. ensure a JDK (and the tools sdkmanager wraps) are available ----
 JVM_ROOT=""
 for v in 21 17 25; do
@@ -51,8 +95,8 @@ for v in 21 17 25; do
 done
 if [ -z "$JVM_ROOT" ]; then
   log "No JDK installed; installing the recommended openjdk-21"
-  apt update
-  apt install -y openjdk-21 jq tar unzip curl || err "apt install of the base packages failed"
+  bg_wait apt update
+  bg_wait apt install -y openjdk-21 jq tar unzip curl || err "apt install of the base packages failed"
   JVM_ROOT="$PREFIX/lib/jvm/java-21-openjdk"
 fi
 export JAVA_HOME="$JVM_ROOT"
@@ -63,11 +107,11 @@ if [ ! -x "$SDKMANAGER" ]; then
   CTOOLS_URL="$(jq -r '.sdkmanager.url' "$MANIFEST")"
   log "Downloading cmdline-tools: $CTOOLS_URL"
   CTOOLS_ZIP="$TMP/commandlinetools-linux.zip"
-  curl -L --fail --retry 3 -o "$CTOOLS_ZIP" "$CTOOLS_URL" || err "download of cmdline-tools failed"
+  bg_wait curl -L --fail --retry 3 -o "$CTOOLS_ZIP" "$CTOOLS_URL" || err "download of cmdline-tools failed"
   rm -rf "$CMDTOOLS_DIR" "$TMP/ctools-staging"
   mkdir -p "$CMDTOOLS_DIR" "$TMP/ctools-staging" "$SDK_DIR"/{platform-tools,platforms,build-tools,licenses}
   log "Unpacking cmdline-tools"
-  unzip -qq "$CTOOLS_ZIP" -d "$TMP/ctools-staging" || err "unzip of cmdline-tools failed"
+  bg_wait unzip -qq "$CTOOLS_ZIP" -d "$TMP/ctools-staging" || err "unzip of cmdline-tools failed"
   if [ -d "$TMP/ctools-staging/cmdline-tools" ]; then
     mv "$TMP/ctools-staging/cmdline-tools"/* "$CMDTOOLS_DIR"
   else
@@ -93,12 +137,13 @@ export ANDROID_SDK_ROOT="$SDK_DIR"
 export ANDROID_USER_HOME="$HOME/.android"
 export PATH="$CMDTOOLS_DIR/bin:$SDK_DIR/platform-tools:$PATH"
 log "Accepting SDK licenses"
-yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 &
+wait $! || true
 
 # ---- 3. query the repository and store the available catalog ----
 log "Querying sdkmanager --list"
 LIST_TMP="$TMP/sdkmanager-list.txt"
-"$SDKMANAGER" --list >"$LIST_TMP" 2>&1 || err "sdkmanager --list failed"
+bg_wait "$SDKMANAGER" --list >"$LIST_TMP" 2>&1 || err "sdkmanager --list failed"
 
 platforms="$(grep -oE 'platforms;android-[0-9]+(\.[0-9]+)?' "$LIST_TMP" \
   | sed -E 's/^platforms;android-//' \

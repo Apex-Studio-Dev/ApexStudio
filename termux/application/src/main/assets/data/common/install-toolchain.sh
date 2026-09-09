@@ -62,6 +62,95 @@ TMP="${TMPDIR:-$PREFIX/tmp}"
 
 [ -z "$JDK" ] && JDK="21"
 
+# Markers that prove a component is fully installed. Mirror the strong checks
+# used by the Kotlin SDK manager (ToolchainStatus).
+platform_ok() { [ -f "$SDK_DIR/platforms/android-$1/android.jar" ]; }
+build_tools_ok() { [ -f "$SDK_DIR/build-tools/$1/aapt2" ]; }
+ndk_ok() { [ -f "$SDK_DIR/ndk/$1/source.properties" ]; }
+cmake_ok() { [ -x "$SDK_DIR/cmake/$1/bin/cmake" ]; }
+
+# Expands the requested NDK/CMake tokens into concrete versions ('all' -> the
+# manifest list). Used by cleanup and only defined here so it is available
+# before the install functions are registered.
+ndk_requested() {
+  for v in "${NDKS[@]}"; do
+    if [ "$v" = "all" ]; then json_array '.ndk[].version'; elif [ "$v" != "none" ]; then echo "$v"; fi
+  done
+}
+cmake_requested() {
+  for v in "${CMAKES[@]}"; do
+    if [ "$v" = "all" ]; then json_array '.cmake[].version'; elif [ "$v" != "none" ]; then echo "$v"; fi
+  done
+}
+
+# Runs a (potentially long) foreground command in the background so bash's
+# signal traps fire immediately: `wait` is interruptible, a foreground child is
+# not (bash defers the trap until the child finishes).
+bg_wait() {
+  "$@" &
+  local pid=$!
+  wait "$pid"
+}
+
+# Removes tmp/staging artifacts and any requested component that was left in a
+# partial/broken state by this failed run. Components that pass their marker
+# check are never touched.
+cleanup_on_fail() {
+  local code=$?
+  trap - EXIT INT TERM
+  set +e
+  # Kill any children that survived a cancel/failure (curl, sdkmanager, tar,
+  # unzip, ...) so they cannot keep writing into the SDK tree while we remove
+  # partial components below. Only OUR children are signalled (not the process
+  # group): the app spawns bash in its own process group and must survive.
+  if [ "$code" -ne 0 ]; then
+    pkill -TERM -P $$ 2>/dev/null
+    sleep 1
+    pkill -KILL -P $$ 2>/dev/null
+  fi
+  rm -rf "$TMP/ctools-staging" "$TMP/ndk-extract"
+  rm -f "$TMP/commandlinetools-linux.zip" "$TMP"/ndk-*.tar.xz "$TMP"/cmake-* 2>/dev/null || true
+  if [ "$code" -eq 0 ]; then
+    return 0
+  fi
+  log "Install failed (exit $code); removing partial/stale artifacts"
+  [ ! -x "$SDKMANAGER" ] && { [ -d "$CMDTOOLS_DIR" ] && rm -rf "$CMDTOOLS_DIR" && log "  removed partial cmdline-tools"; }
+  local v
+  while IFS= read -r v; do
+    platform_ok "$v" || { [ -e "$SDK_DIR/platforms/android-$v" ] && { rm -rf "$SDK_DIR/platforms/android-$v" && log "  removed partial platform android-$v"; }; }
+  done < <(requested platforms "${PLATFORMS[@]}")
+  while IFS= read -r v; do
+    build_tools_ok "$v" || { [ -e "$SDK_DIR/build-tools/$v" ] && { rm -rf "$SDK_DIR/build-tools/$v" && log "  removed partial build-tools $v"; }; }
+  done < <(requested build_tools "${BUILD_TOOLS[@]}")
+  local ndk
+  while IFS= read -r ndk; do
+    if [ -L "$SDK_DIR/ndk/$ndk" ]; then
+      rm -f "$SDK_DIR/ndk/$ndk" && log "  removed partial NDK link $ndk"
+    elif ndk_ok "$ndk"; then
+      :
+    elif [ -e "$SDK_DIR/ndk/$ndk" ]; then
+      rm -rf "$SDK_DIR/ndk/$ndk" && log "  removed partial NDK $ndk"
+    fi
+  done < <(ndk_requested)
+  local cma
+  while IFS= read -r cma; do
+    cmake_ok "$cma" || { [ -e "$SDK_DIR/cmake/$cma" ] && { rm -rf "$SDK_DIR/cmake/$cma" && log "  removed partial CMake $cma"; }; }
+  done < <(cmake_requested)
+  log "Cleanup complete"
+  return 0
+}
+trap cleanup_on_fail EXIT
+
+# The app sends SIGTERM to bash on Cancel. Kill our running children first so
+# a partial download/install stops writing, then exit (the EXIT trap cleans up).
+# Do NOT use `kill -TERM -$$` here — bash runs in the app's process group, so
+# that would take the whole Android app down.
+sigexit() {
+  pkill -TERM -P $$ 2>/dev/null
+  exit 130
+}
+trap sigexit INT TERM
+
 is_all() { [ "$1" = "all" ]; }
 
 json_array() { jq -r "$1" "$MANIFEST"; }
@@ -151,12 +240,12 @@ fi
 
 # ---- 1. base packages + JDK + aapt2 from the Apex apt repo ----
 log "apt update"
-apt update
+bg_wait apt update
 APKGS=()
 for v in $(jdk_pkg "$JDK"); do APKGS+=("$v"); done
 APKGS+=(aapt2 jq tar unzip curl)
 log "apt install: ${APKGS[*]}"
-apt install -y "${APKGS[@]}" || err "apt install failed (is the Apex apt repository reachable?)"
+bg_wait apt install -y "${APKGS[@]}" || err "apt install failed (is the Apex apt repository reachable?)"
 
 # ---- 2. scaffold the SDK layout ----
 mkdir -p "$SDK_DIR"/{cmdline-tools,platform-tools,platforms,build-tools,ndk,cmake,licenses} "$TMP"
@@ -187,11 +276,11 @@ if [ ! -x "$SDKMANAGER" ]; then
   CTOOLS_URL="$(json_array '.sdkmanager.url')"
   log "Downloading cmdline-tools: $CTOOLS_URL"
   CTOOLS_ZIP="$TMP/commandlinetools-linux.zip"
-  curl -L --fail --retry 3 -o "$CTOOLS_ZIP" "$CTOOLS_URL" || err "download of cmdline-tools failed"
+  bg_wait curl -L --fail --retry 3 -o "$CTOOLS_ZIP" "$CTOOLS_URL" || err "download of cmdline-tools failed"
   rm -rf "$CMDTOOLS_DIR" "$TMP/ctools-staging"
   mkdir -p "$CMDTOOLS_DIR" "$TMP/ctools-staging"
   log "Unpacking cmdline-tools"
-  unzip -qq "$CTOOLS_ZIP" -d "$TMP/ctools-staging" || err "unzip of cmdline-tools failed"
+  bg_wait unzip -qq "$CTOOLS_ZIP" -d "$TMP/ctools-staging" || err "unzip of cmdline-tools failed"
   # The zip contains a top-level cmdline-tools/ folder; flatten it into latest/.
   if [ -d "$TMP/ctools-staging/cmdline-tools" ]; then
     mv "$TMP/ctools-staging/cmdline-tools"/* "$CMDTOOLS_DIR"
@@ -224,7 +313,8 @@ export PATH="$JAVA_HOME/bin:$CMDTOOLS_DIR/bin:$SDK_DIR/platform-tools:$PATH"
 
 # ---- 5. licenses ----
 log "Accepting SDK licenses"
-PATH="$CMDTOOLS_DIR/bin:$SDK_DIR/platform-tools:$PATH" yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 &
+wait $! || true
 
 # ---- 6. platforms + build-tools ----
 PLATFORM_PKGS=()
@@ -233,7 +323,7 @@ BT_PKGS=()
 while IFS= read -r bt; do BT_PKGS+=("build-tools;$bt"); done < <(requested build_tools "${BUILD_TOOLS[@]}")
 log "sdkmanager installing: ${PLATFORM_PKGS[*]} ${BT_PKGS[*]}"
 if [ ${#PLATFORM_PKGS[@]} -gt 0 ] || [ ${#BT_PKGS[@]} -gt 0 ]; then
-  "$SDKMANAGER" "${PLATFORM_PKGS[@]}" "${BT_PKGS[@]}" || err "sdkmanager install failed"
+  bg_wait "$SDKMANAGER" "${PLATFORM_PKGS[@]}" "${BT_PKGS[@]}" || err "sdkmanager install failed"
 fi
 
 # ---- 7. NDK (musl builds, need symlink fixes for the Gradle layout) ----
@@ -249,11 +339,11 @@ install_ndk() {
     return
   fi
   log "Downloading NDK $ndk: $url"
-  curl -L --fail --retry 3 -o "$file" "$url" || err "download of NDK $ndk failed"
+  bg_wait curl -L --fail --retry 3 -o "$file" "$url" || err "download of NDK $ndk failed"
   log "Extracting NDK $ndk"
   rm -rf "$TMP/ndk-extract"
   mkdir -p "$TMP/ndk-extract"
-  tar --no-same-owner -xf "$file" -C "$TMP/ndk-extract" || err "extract of NDK $ndk failed"
+  bg_wait tar --no-same-owner -xf "$file" -C "$TMP/ndk-extract" || err "extract of NDK $ndk failed"
   local src
   src="$(find "$TMP/ndk-extract" -maxdepth 1 -type d -name 'android-ndk-*' | head -1)"
   [ -n "$src" ] || src="$TMP/ndk-extract/$ndk"
@@ -288,17 +378,17 @@ install_cmake() {
   fi
   log "Downloading CMake $cma: $url"
   local file="$TMP/cmake-$cma"
-  curl -L --fail --retry 3 -o "$file" "$url" || err "download of CMake $cma failed"
+  bg_wait curl -L --fail --retry 3 -o "$file" "$url" || err "download of CMake $cma failed"
   log "Extracting CMake $cma"
   rm -rf "$SDK_DIR/cmake/$cma"
   mkdir -p "$SDK_DIR/cmake/$cma"
   case "$kind" in
     zip)
-      unzip -qq "$file" -d "$SDK_DIR/cmake/$cma" || { unzip -qq -o "$file" -d "$SDK_DIR/cmake/$cma" || err "unzip of CMake $cma failed"; }
+      bg_wait unzip -qq "$file" -d "$SDK_DIR/cmake/$cma" || { bg_wait unzip -qq -o "$file" -d "$SDK_DIR/cmake/$cma" || err "unzip of CMake $cma failed"; }
       ;;
     *)
-      tar -xf "$file" -C "$SDK_DIR/cmake/$cma" --strip-components=1 \
-        || tar -xf "$file" -C "$SDK_DIR/cmake/$cma" \
+      bg_wait tar -xf "$file" -C "$SDK_DIR/cmake/$cma" --strip-components=1 \
+        || bg_wait tar -xf "$file" -C "$SDK_DIR/cmake/$cma" \
         || err "extract of CMake $cma failed"
       ;;
   esac

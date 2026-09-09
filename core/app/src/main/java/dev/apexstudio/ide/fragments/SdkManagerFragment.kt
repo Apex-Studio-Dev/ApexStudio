@@ -55,6 +55,7 @@ import dev.apexstudio.ide.databinding.LayoutSdkInstallDialogBinding
 import dev.apexstudio.ide.resources.R.string
 import dev.apexstudio.ide.utils.ConnectionInfo
 import dev.apexstudio.ide.utils.Environment
+import dev.apexstudio.ide.utils.ToolchainStatus
 import dev.apexstudio.ide.utils.flashError
 import dev.apexstudio.ide.utils.flashSuccess
 import dev.apexstudio.ide.utils.getConnectionInfo
@@ -93,6 +94,9 @@ class SdkManagerFragment : Fragment() {
    * clears a category.
    */
   private var defaultsApplied = false
+
+  /** True once leftover partial installs have been purged for this view. */
+  private var stalePurged = false
 
   @Volatile
   private var installingToolchain = false
@@ -204,6 +208,7 @@ class SdkManagerFragment : Fragment() {
   }
 
   private fun refreshComponentLists() {
+    purgeStaleComponentsOnce()
     val (catalogPlatforms, catalogBuildTools) = readSdkManagerCatalog()
     val catalogReady = catalogPlatforms.isNotEmpty() || catalogBuildTools.isNotEmpty()
     content.apply {
@@ -232,17 +237,37 @@ class SdkManagerFragment : Fragment() {
         it.getString("display") to it.getString("version")
       }
       populateCheckboxList(llNdk, ndks, selectedNdkVersions, "ndk") {
-        File(Environment.ANDROID_HOME, "ndk/$it").exists()
+        ToolchainStatus.ndkInstalled(it)
       }
 
       val cmakes = readToolchainManifest().getJSONArray("cmake").toObjectList().map {
         it.getString("display") to it.getString("version")
       }
       populateCheckboxList(llCmake, cmakes, selectedCmakeVersions, "cmake") {
-        File(Environment.ANDROID_HOME, "cmake/$it").isDirectory
+        ToolchainStatus.cmakeInstalled(it)
       }
     }
     updateJdkStatus()
+  }
+
+  /**
+   * Cleans up leftover partial installs (from failed/interrupted runs) once per
+   * view creation, so stale empty/broken directories are not reported as
+   * installed and do not keep consuming space.
+   */
+  private fun purgeStaleComponentsOnce() {
+    if (stalePurged || installingToolchain) {
+      return
+    }
+    stalePurged = true
+    val removed = ToolchainStatus.purgeStaleComponents()
+    if (removed.isNotEmpty()) {
+      _content?.root?.post {
+        if (isAdded) {
+          flashSuccess(getString(R.string.msg_sdk_manager_purged, removed.size))
+        }
+      }
+    }
   }
 
   /**
@@ -275,7 +300,7 @@ class SdkManagerFragment : Fragment() {
             selectedNdkVersions.clear()
             readToolchainManifest().getJSONArray("ndk").toObjectList()
               .map { it.getString("version") }
-              .filterNot { File(Environment.ANDROID_HOME, "ndk/$it").exists() }
+              .filterNot(::ndkInstalled)
               .forEach { selectedNdkVersions += it }
           } else {
             selectedNdkVersions.clear()
@@ -286,7 +311,7 @@ class SdkManagerFragment : Fragment() {
             selectedCmakeVersions.clear()
             readToolchainManifest().getJSONArray("cmake").toObjectList()
               .map { it.getString("version") }
-              .filterNot { File(Environment.ANDROID_HOME, "cmake/$it").isDirectory }
+              .filterNot(::cmakeInstalled)
               .forEach { selectedCmakeVersions += it }
           } else {
             selectedCmakeVersions.clear()
@@ -301,7 +326,7 @@ class SdkManagerFragment : Fragment() {
   private fun updateJdkStatus() {
     val selected = content.jdkVersion.text?.toString()?.removePrefix("JDK ")?.replace(" ", "")
       .orEmpty()
-    val installed = selected.isNotEmpty() && jdkInstalled(selected)
+    val installed = selected.isNotEmpty() && ToolchainStatus.jdkInstalled(selected)
     val label = if (installed) {
       getString(R.string.msg_sdk_component_installed)
     } else {
@@ -316,7 +341,13 @@ class SdkManagerFragment : Fragment() {
   }
 
   private fun jdkInstalled(version: String): Boolean =
-    File(File(Environment.PREFIX, "lib/jvm"), "java-$version-openjdk").isDirectory
+    ToolchainStatus.jdkInstalled(version)
+
+  private fun ndkInstalled(token: String): Boolean =
+    ToolchainStatus.ndkInstalled(token)
+
+  private fun cmakeInstalled(version: String): Boolean =
+    ToolchainStatus.cmakeInstalled(version)
 
   fun needsInstall(): Boolean {
     if (installingToolchain) {
@@ -344,13 +375,11 @@ class SdkManagerFragment : Fragment() {
       return true
     }
 
-    if (selectedNdkVersions.any { !File(Environment.ANDROID_HOME, "ndk/$it").exists() }) {
+    if (selectedNdkVersions.any { !ndkInstalled(it) }) {
       return true
     }
 
-    if (selectedCmakeVersions.any {
-        !File(Environment.ANDROID_HOME, "cmake/$it").isDirectory
-      }) {
+    if (selectedCmakeVersions.any { !cmakeInstalled(it) }) {
       return true
     }
 
@@ -735,10 +764,10 @@ class SdkManagerFragment : Fragment() {
   }
 
   private fun platformInstalled(api: String): Boolean =
-    File(Environment.ANDROID_HOME, "platforms/android-$api").isDirectory
+    ToolchainStatus.platformInstalled(api)
 
   private fun buildToolsInstalled(version: String): Boolean =
-    File(Environment.ANDROID_HOME, "build-tools/$version").isDirectory
+    ToolchainStatus.buildToolsInstalled(version)
 
   private fun setUiEnabled(enabled: Boolean) {
     content.jdkVersionLayout.isEnabled = enabled

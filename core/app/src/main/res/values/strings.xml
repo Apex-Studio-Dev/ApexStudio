@@ -82,4 +82,5 @@
   <string name="msg_sdk_manager_uninstalling">Uninstalling %1$s...</string>
   <string name="msg_sdk_manager_uninstalled">Component uninstalled.</string>
   <string name="msg_sdk_manager_uninstall_failed">Uninstall failed (exit code %1$d).</string>
+  <string name="msg_sdk_manager_purged">Removed leftover files from %1$d interrupted install(s).</string>
 </resources>
